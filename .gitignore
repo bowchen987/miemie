@@ -1,0 +1,9 @@
+.DS_Store
+.superpowers/
+.xcodebuildmcp/
+DerivedData/
+DerivedDataDevice/
+DerivedDataDeviceSigned/
+*.xcresult
+*.xcuserstate
+xcuserdata/

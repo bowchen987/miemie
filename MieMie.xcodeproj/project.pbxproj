@@ -1,0 +1,533 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		05484FF720F6F1867E8A406F /* MieMieApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 169F2960283D1C1D1648D4B3 /* MieMieApp.swift */; };
+		05A8C74AAB9FECA2C10987AD /* LocationSharingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 714C48C6703F3A309C6DE40F /* LocationSharingService.swift */; };
+		17C146BC884A2D22B232F7AB /* FamilyFeedStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3BF6BA71E08C48D3F69C621 /* FamilyFeedStore.swift */; };
+		233A86F8CDA4F1A4AF39CE01 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = ABCBB4098E4C4873285984BC /* Assets.xcassets */; };
+		3C4B23E18E1B120DD549E9F4 /* DistanceFormatterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42CC3247322CD3ACCD7517D3 /* DistanceFormatterTests.swift */; };
+		46639D956299986C5BF7E608 /* FamilyPost.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7BFEB70997B9D3556011D412 /* FamilyPost.swift */; };
+		60EF95EC0E01FB14A39EFC82 /* AppMetadataTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEE0B65651BE9AF4C1857A35 /* AppMetadataTests.swift */; };
+		67958EC44EA9940713679547 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2251765203E592B8D1B0130A /* Foundation.framework */; };
+		7A0A69D1DE10F884D81328B2 /* DistanceFormatter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06A68E9978949940714F9731 /* DistanceFormatter.swift */; };
+		7D18501D4F7CCB398460F0EE /* NotificationPermissionServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C537B590559CF96218556F29 /* NotificationPermissionServiceTests.swift */; };
+		87953E3CD7CAD289F08EEFED /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2251765203E592B8D1B0130A /* Foundation.framework */; };
+		888B37FC5A714A2B807C08D8 /* CloudKitFamilyServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 033A53995B32808A8B4C6D94 /* CloudKitFamilyServiceTests.swift */; };
+		8B6080B9598D9AF8CC87A374 /* LocationSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A5A82178A40506413C133E2 /* LocationSnapshot.swift */; };
+		8C0ADBAAECA4B807056A7A31 /* FamilyPostTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15AD9C0A789CFD484141D4E2 /* FamilyPostTests.swift */; };
+		A17EAFA2CD539CDBE2AC8A30 /* FamilyFeedStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F04E39FF075F58375C8D93D /* FamilyFeedStoreTests.swift */; };
+		CDA70302FAE1C3297D2984C0 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 76869067D940871103885360 /* HomeView.swift */; };
+		D95663EBB7E2484DCE099E31 /* AppTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = B9007EDC1866CF100BFCFFEA /* AppTheme.swift */; };
+		DB0D025301362D7A2EDF3645 /* CloudKitFamilyService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 526E79E65CC22CAD41536217 /* CloudKitFamilyService.swift */; };
+		EC0AA88ED7CA685DF582BCBF /* AppRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25719076731481539382802C /* AppRootView.swift */; };
+		F104033CD97187F68AC907A4 /* ComposerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BFA0F3A12A8329EE8FDB817 /* ComposerView.swift */; };
+		FA858FD0C25BD1E958146931 /* NotificationPermissionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7289F5993C4078EF9017BC56 /* NotificationPermissionService.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		4292D3704CE264D031F84830 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = CAC40F97535343573439594F /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 8C6708F42CB1CEC6CC667AAE;
+			remoteInfo = MieMie;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		033A53995B32808A8B4C6D94 /* CloudKitFamilyServiceTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CloudKitFamilyServiceTests.swift; sourceTree = "<group>"; };
+		06A68E9978949940714F9731 /* DistanceFormatter.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = DistanceFormatter.swift; path = Models/DistanceFormatter.swift; sourceTree = "<group>"; };
+		15AD9C0A789CFD484141D4E2 /* FamilyPostTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = FamilyPostTests.swift; sourceTree = "<group>"; };
+		169F2960283D1C1D1648D4B3 /* MieMieApp.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MieMieApp.swift; sourceTree = "<group>"; };
+		2251765203E592B8D1B0130A /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
+		25719076731481539382802C /* AppRootView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = AppRootView.swift; path = App/AppRootView.swift; sourceTree = "<group>"; };
+		2A5A82178A40506413C133E2 /* LocationSnapshot.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = LocationSnapshot.swift; path = Models/LocationSnapshot.swift; sourceTree = "<group>"; };
+		3F04E39FF075F58375C8D93D /* FamilyFeedStoreTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = FamilyFeedStoreTests.swift; sourceTree = "<group>"; };
+		42CC3247322CD3ACCD7517D3 /* DistanceFormatterTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = DistanceFormatterTests.swift; sourceTree = "<group>"; };
+		526E79E65CC22CAD41536217 /* CloudKitFamilyService.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = CloudKitFamilyService.swift; path = Services/CloudKitFamilyService.swift; sourceTree = "<group>"; };
+		5741B2AC28550B0336912F55 /* MieMieTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MieMieTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		6BFA0F3A12A8329EE8FDB817 /* ComposerView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ComposerView.swift; path = Features/Composer/ComposerView.swift; sourceTree = "<group>"; };
+		714C48C6703F3A309C6DE40F /* LocationSharingService.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = LocationSharingService.swift; path = Services/LocationSharingService.swift; sourceTree = "<group>"; };
+		7289F5993C4078EF9017BC56 /* NotificationPermissionService.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = NotificationPermissionService.swift; path = Services/NotificationPermissionService.swift; sourceTree = "<group>"; };
+		76869067D940871103885360 /* HomeView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = HomeView.swift; path = Features/Home/HomeView.swift; sourceTree = "<group>"; };
+		7BFEB70997B9D3556011D412 /* FamilyPost.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = FamilyPost.swift; path = Models/FamilyPost.swift; sourceTree = "<group>"; };
+		ABCBB4098E4C4873285984BC /* Assets.xcassets */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder.assetcatalog; name = Assets.xcassets; path = Resources/Assets.xcassets; sourceTree = "<group>"; };
+		B9007EDC1866CF100BFCFFEA /* AppTheme.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = AppTheme.swift; path = App/AppTheme.swift; sourceTree = "<group>"; };
+		C3BF6BA71E08C48D3F69C621 /* FamilyFeedStore.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = FamilyFeedStore.swift; path = App/FamilyFeedStore.swift; sourceTree = "<group>"; };
+		C537B590559CF96218556F29 /* NotificationPermissionServiceTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NotificationPermissionServiceTests.swift; sourceTree = "<group>"; };
+		CE3396ADFD9DD20E2064F48B /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; name = Info.plist; path = Resources/Info.plist; sourceTree = "<group>"; };
+		CEE0B65651BE9AF4C1857A35 /* AppMetadataTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AppMetadataTests.swift; sourceTree = "<group>"; };
+		D06F4134F6DE1621146DD97B /* MieMie.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MieMie.app; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		8879064C83D16D06224A97A0 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				87953E3CD7CAD289F08EEFED /* Foundation.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		EB271C8142FC126336693A65 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				67958EC44EA9940713679547 /* Foundation.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		07BF40676D931E6CE1DA7243 /* MieMieTests */ = {
+			isa = PBXGroup;
+			children = (
+				CEE0B65651BE9AF4C1857A35 /* AppMetadataTests.swift */,
+				033A53995B32808A8B4C6D94 /* CloudKitFamilyServiceTests.swift */,
+				42CC3247322CD3ACCD7517D3 /* DistanceFormatterTests.swift */,
+				3F04E39FF075F58375C8D93D /* FamilyFeedStoreTests.swift */,
+				15AD9C0A789CFD484141D4E2 /* FamilyPostTests.swift */,
+				C537B590559CF96218556F29 /* NotificationPermissionServiceTests.swift */,
+			);
+			name = MieMieTests;
+			path = MieMieTests;
+			sourceTree = "<group>";
+		};
+		0BD988E5A5DA69BF1556F7EF /* MieMie */ = {
+			isa = PBXGroup;
+			children = (
+				25719076731481539382802C /* AppRootView.swift */,
+				B9007EDC1866CF100BFCFFEA /* AppTheme.swift */,
+				C3BF6BA71E08C48D3F69C621 /* FamilyFeedStore.swift */,
+				6BFA0F3A12A8329EE8FDB817 /* ComposerView.swift */,
+				76869067D940871103885360 /* HomeView.swift */,
+				169F2960283D1C1D1648D4B3 /* MieMieApp.swift */,
+				06A68E9978949940714F9731 /* DistanceFormatter.swift */,
+				7BFEB70997B9D3556011D412 /* FamilyPost.swift */,
+				2A5A82178A40506413C133E2 /* LocationSnapshot.swift */,
+				526E79E65CC22CAD41536217 /* CloudKitFamilyService.swift */,
+				714C48C6703F3A309C6DE40F /* LocationSharingService.swift */,
+				7289F5993C4078EF9017BC56 /* NotificationPermissionService.swift */,
+				ABCBB4098E4C4873285984BC /* Assets.xcassets */,
+				CE3396ADFD9DD20E2064F48B /* Info.plist */,
+			);
+			name = MieMie;
+			path = MieMie;
+			sourceTree = "<group>";
+		};
+		42F79490E25BE043F694BCBC /* iOS */ = {
+			isa = PBXGroup;
+			children = (
+				2251765203E592B8D1B0130A /* Foundation.framework */,
+			);
+			name = iOS;
+			sourceTree = "<group>";
+		};
+		450FA91E06DE2D7BB5C8CEB1 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				42F79490E25BE043F694BCBC /* iOS */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		77E0E67F6AD00A2949977736 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				D06F4134F6DE1621146DD97B /* MieMie.app */,
+				5741B2AC28550B0336912F55 /* MieMieTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		8D48A7E2A770455D65A54D28 = {
+			isa = PBXGroup;
+			children = (
+				77E0E67F6AD00A2949977736 /* Products */,
+				450FA91E06DE2D7BB5C8CEB1 /* Frameworks */,
+				0BD988E5A5DA69BF1556F7EF /* MieMie */,
+				07BF40676D931E6CE1DA7243 /* MieMieTests */,
+			);
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		8C6708F42CB1CEC6CC667AAE /* MieMie */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 954CDA68BA6A8B0459C56E3E /* Build configuration list for PBXNativeTarget "MieMie" */;
+			buildPhases = (
+				C0C8E6C8A52C5C057E299861 /* Sources */,
+				EB271C8142FC126336693A65 /* Frameworks */,
+				BD7A6CF0A6B30B8E9DBE4A88 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = MieMie;
+			productName = MieMie;
+			productReference = D06F4134F6DE1621146DD97B /* MieMie.app */;
+			productType = "com.apple.product-type.application";
+		};
+		DB22775E6DEE06968AAC4B77 /* MieMieTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = BC98051F1C620F9A8EE2082A /* Build configuration list for PBXNativeTarget "MieMieTests" */;
+			buildPhases = (
+				F71324CE48D1D09E51E6DEE7 /* Sources */,
+				8879064C83D16D06224A97A0 /* Frameworks */,
+				EC40D4D7B3267479E7116624 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				2472564C224AC36EAFC01612 /* PBXTargetDependency */,
+			);
+			name = MieMieTests;
+			productName = MieMieTests;
+			productReference = 5741B2AC28550B0336912F55 /* MieMieTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		CAC40F97535343573439594F /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastSwiftUpdateCheck = 2650;
+				LastUpgradeCheck = 2650;
+			};
+			buildConfigurationList = 32D2AF05E39C0687D48A2DF4 /* Build configuration list for PBXProject "MieMie" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 8D48A7E2A770455D65A54D28;
+			minimizedProjectReferenceProxies = 0;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 77E0E67F6AD00A2949977736 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				8C6708F42CB1CEC6CC667AAE /* MieMie */,
+				DB22775E6DEE06968AAC4B77 /* MieMieTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		BD7A6CF0A6B30B8E9DBE4A88 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				233A86F8CDA4F1A4AF39CE01 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		EC40D4D7B3267479E7116624 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		C0C8E6C8A52C5C057E299861 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				EC0AA88ED7CA685DF582BCBF /* AppRootView.swift in Sources */,
+				D95663EBB7E2484DCE099E31 /* AppTheme.swift in Sources */,
+				17C146BC884A2D22B232F7AB /* FamilyFeedStore.swift in Sources */,
+				F104033CD97187F68AC907A4 /* ComposerView.swift in Sources */,
+				CDA70302FAE1C3297D2984C0 /* HomeView.swift in Sources */,
+				05484FF720F6F1867E8A406F /* MieMieApp.swift in Sources */,
+				7A0A69D1DE10F884D81328B2 /* DistanceFormatter.swift in Sources */,
+				46639D956299986C5BF7E608 /* FamilyPost.swift in Sources */,
+				8B6080B9598D9AF8CC87A374 /* LocationSnapshot.swift in Sources */,
+				DB0D025301362D7A2EDF3645 /* CloudKitFamilyService.swift in Sources */,
+				05A8C74AAB9FECA2C10987AD /* LocationSharingService.swift in Sources */,
+				FA858FD0C25BD1E958146931 /* NotificationPermissionService.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F71324CE48D1D09E51E6DEE7 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				60EF95EC0E01FB14A39EFC82 /* AppMetadataTests.swift in Sources */,
+				888B37FC5A714A2B807C08D8 /* CloudKitFamilyServiceTests.swift in Sources */,
+				3C4B23E18E1B120DD549E9F4 /* DistanceFormatterTests.swift in Sources */,
+				A17EAFA2CD539CDBE2AC8A30 /* FamilyFeedStoreTests.swift in Sources */,
+				8C0ADBAAECA4B807056A7A31 /* FamilyPostTests.swift in Sources */,
+				7D18501D4F7CCB398460F0EE /* NotificationPermissionServiceTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		2472564C224AC36EAFC01612 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = MieMie;
+			target = 8C6708F42CB1CEC6CC667AAE /* MieMie */;
+			targetProxy = 4292D3704CE264D031F84830 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		4B365180A76C4FF97973007E /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_STYLE = Automatic;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.miemie.familyhub.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/MieMie.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/MieMie";
+			};
+			name = Debug;
+		};
+		4C2D616C29A0B03A69746721 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		4DC3C87B7D5343A7D1FCA685 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_ENTITLEMENTS = MieMie/MieMie.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = MieMie/Resources/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.miemie.familyhub;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		58650A9335222E91FB2BC9F9 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		6F38644B9D7543E7E9DB33D2 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_ENTITLEMENTS = MieMie/MieMie.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = MieMie/Resources/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.miemie.familyhub;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		E054E7F14ED40D9E8CB451D8 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_STYLE = Automatic;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.miemie.familyhub.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/MieMie.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/MieMie";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		32D2AF05E39C0687D48A2DF4 /* Build configuration list for PBXProject "MieMie" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				58650A9335222E91FB2BC9F9 /* Debug */,
+				4C2D616C29A0B03A69746721 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		954CDA68BA6A8B0459C56E3E /* Build configuration list for PBXNativeTarget "MieMie" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				6F38644B9D7543E7E9DB33D2 /* Release */,
+				4DC3C87B7D5343A7D1FCA685 /* Debug */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		BC98051F1C620F9A8EE2082A /* Build configuration list for PBXNativeTarget "MieMieTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E054E7F14ED40D9E8CB451D8 /* Release */,
+				4B365180A76C4FF97973007E /* Debug */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = CAC40F97535343573439594F /* Project object */;
+}
