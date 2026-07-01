@@ -43,7 +43,8 @@ export class FamilyStore {
       authorMemberId: this.clean(input.authorMemberId) || null,
       createdAt: this.now().toISOString(),
       hasPhoto: Boolean(input.hasPhoto),
-      imageUrl: input.imageUrl ?? null
+      imageUrl: input.imageUrl ?? null,
+      comments: []
     };
 
     this.posts.push(post);
@@ -107,6 +108,45 @@ export class FamilyStore {
     };
   }
 
+  async addComment(postId, input) {
+    const post = this.posts.find((item) => item.id === postId && item.kind === "message");
+    if (!post) {
+      throw new Error("message post not found");
+    }
+
+    const body = this.clean(input.body);
+    const authorName = this.clean(input.authorName) || "我";
+    const authorMemberId = this.clean(input.authorMemberId) || null;
+    if (!body) {
+      throw new Error("comment body is required");
+    }
+
+    const comment = {
+      id: randomUUID(),
+      body,
+      authorName,
+      authorMemberId,
+      createdAt: this.now().toISOString()
+    };
+    post.comments = Array.isArray(post.comments) ? post.comments : [];
+    post.comments.push(comment);
+    await this.save();
+
+    return {
+      post,
+      comment,
+      event: {
+        id: randomUUID(),
+        type: "comment-added",
+        postId: post.id,
+        post,
+        comment,
+        actorMemberId: authorMemberId,
+        createdAt: this.now().toISOString()
+      }
+    };
+  }
+
   async savePushSubscription(input) {
     const memberId = this.clean(input.memberId);
     const displayName = this.clean(input.displayName) || memberId || "我";
@@ -151,7 +191,7 @@ export class FamilyStore {
     try {
       const raw = await readFile(this.filePath, "utf8");
       const data = JSON.parse(raw);
-      this.posts = Array.isArray(data.posts) ? data.posts : [];
+      this.posts = Array.isArray(data.posts) ? data.posts.map((post) => ({ comments: [], ...post })) : [];
       this.members = data.members && typeof data.members === "object" ? data.members : {};
       this.pushSubscriptions = Array.isArray(data.pushSubscriptions) ? data.pushSubscriptions : [];
     } catch (error) {

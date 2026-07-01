@@ -12,6 +12,8 @@ const FILTER_TITLES = {
   message: "全部留言"
 };
 
+const COMMENT_EMOJIS = ["❤️", "👍", "😂", "🥰", "👏", "🙏"];
+
 const state = {
   filter: "all",
   composeKind: "message",
@@ -24,6 +26,7 @@ const state = {
 localStorage.setItem("miemie.memberId", state.memberId);
 let eventSource;
 let serviceWorkerRegistration;
+let lastResumeRefreshAt = 0;
 
 const elements = {
   connectionState: document.querySelector("#connectionState"),
@@ -57,7 +60,8 @@ async function init() {
   bindEvents();
   serviceWorkerRegistration = await registerServiceWorker();
   try {
-    await Promise.all([loadPosts(), loadStatus()]);
+    await refreshAll();
+    lastResumeRefreshAt = Date.now();
     connectEvents();
   } catch (error) {
     if (error.message !== "family code is required") {
@@ -88,6 +92,17 @@ function bindEvents() {
   elements.saveFamilyCodeButton.addEventListener("click", saveFamilyCode);
   elements.shareLocationButton.addEventListener("click", shareLocation);
   elements.enableNotifyButton.addEventListener("click", requestNotificationPermission);
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") {
+      refreshAfterResume();
+    }
+  });
+  window.addEventListener("pageshow", (event) => {
+    if (event.persisted) {
+      refreshAfterResume();
+    }
+  });
+  window.addEventListener("focus", refreshAfterResume);
 }
 
 function registerServiceWorker() {
@@ -178,6 +193,31 @@ async function loadPosts() {
   renderPosts();
 }
 
+async function refreshAll() {
+  await Promise.all([loadPosts(), loadStatus()]);
+}
+
+async function refreshAfterResume() {
+  if (document.visibilityState === "hidden") {
+    return;
+  }
+
+  const now = Date.now();
+  if (now - lastResumeRefreshAt < 1500) {
+    return;
+  }
+  lastResumeRefreshAt = now;
+
+  try {
+    await refreshAll();
+    await syncCurrentLocation({ quiet: true, requireOptIn: true });
+  } catch (error) {
+    if (error.message !== "family code is required") {
+      elements.connectionState.textContent = "刷新失败";
+    }
+  }
+}
+
 function renderPosts() {
   elements.feedTitle.textContent = FILTER_TITLES[state.filter];
   elements.feedList.replaceChildren();
@@ -221,7 +261,101 @@ function renderPost(post) {
     image.removeAttribute("src");
   }
 
+  if (post.kind === "message") {
+    card.append(renderComments(post));
+  }
+
   return fragment;
+}
+
+function renderComments(post) {
+  const section = document.createElement("section");
+  section.className = "comments-section";
+
+  const comments = Array.isArray(post.comments) ? post.comments : [];
+  if (comments.length > 0) {
+    const list = document.createElement("div");
+    list.className = "comments-list";
+    for (const comment of comments) {
+      const item = document.createElement("p");
+      item.className = "comment-item";
+
+      const author = document.createElement("strong");
+      author.textContent = comment.authorName;
+
+      const body = document.createElement("span");
+      body.textContent = comment.body;
+
+      const time = document.createElement("time");
+      time.textContent = formatTime(comment.createdAt);
+
+      item.append(author, body, time);
+      list.append(item);
+    }
+    section.append(list);
+  }
+
+  const form = document.createElement("form");
+  form.className = "comment-form";
+
+  const textarea = document.createElement("textarea");
+  textarea.maxLength = 120;
+  textarea.rows = 1;
+  textarea.placeholder = "回复一句";
+
+  const emojiRow = document.createElement("div");
+  emojiRow.className = "emoji-row";
+  for (const emoji of COMMENT_EMOJIS) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.textContent = emoji;
+    button.setAttribute("aria-label", `添加${emoji}`);
+    button.addEventListener("click", () => appendEmoji(textarea, emoji));
+    emojiRow.append(button);
+  }
+
+  const submitButton = document.createElement("button");
+  submitButton.type = "submit";
+  submitButton.textContent = "回复";
+
+  form.append(textarea, submitButton, emojiRow);
+  form.addEventListener("submit", (event) => submitComment(event, post.id, textarea));
+  section.append(form);
+
+  return section;
+}
+
+function appendEmoji(textarea, emoji) {
+  const start = textarea.selectionStart ?? textarea.value.length;
+  const end = textarea.selectionEnd ?? textarea.value.length;
+  textarea.value = `${textarea.value.slice(0, start)}${emoji}${textarea.value.slice(end)}`;
+  const cursor = start + emoji.length;
+  textarea.setSelectionRange(cursor, cursor);
+  textarea.focus();
+}
+
+async function submitComment(event, postId, textarea) {
+  event.preventDefault();
+  if (!ensureDisplayName()) {
+    return;
+  }
+
+  const body = textarea.value.trim();
+  if (!body) {
+    textarea.focus();
+    return;
+  }
+
+  await api(`/api/posts/${encodeURIComponent(postId)}/comments`, {
+    method: "POST",
+    body: {
+      body,
+      authorName: state.displayName,
+      authorMemberId: state.memberId
+    }
+  });
+  textarea.value = "";
+  await loadPosts();
 }
 
 async function toggleTodo(id) {
@@ -266,7 +400,7 @@ async function saveFamilyCode() {
   state.familyCode = elements.familyCodeInput.value.trim();
   localStorage.setItem("miemie.familyCode", state.familyCode);
   elements.accessPanel.hidden = true;
-  await Promise.all([loadPosts(), loadStatus()]);
+  await refreshAll();
   connectEvents();
 }
 
@@ -275,29 +409,73 @@ async function shareLocation() {
     return;
   }
 
+  await syncCurrentLocation();
+}
+
+async function syncCurrentLocation({ quiet = false, requireOptIn = false } = {}) {
+  if (requireOptIn && localStorage.getItem("miemie.locationAutoSyncEnabled") !== "true") {
+    return false;
+  }
+  if (!state.displayName) {
+    return false;
+  }
   if (!("geolocation" in navigator)) {
-    elements.statusText.textContent = "当前浏览器不支持定位";
-    return;
+    if (!quiet) {
+      elements.statusText.textContent = "当前浏览器不支持定位";
+    }
+    return false;
+  }
+  if (requireOptIn && !(await canAutoSyncLocation())) {
+    return false;
   }
 
-  elements.statusText.textContent = "正在同步位置";
-  navigator.geolocation.getCurrentPosition(
-    async (position) => {
-      await api(`/api/members/${encodeURIComponent(state.memberId)}/location`, {
-        method: "POST",
-        body: {
-          displayName: state.displayName,
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude
+  if (!quiet) {
+    elements.statusText.textContent = "正在同步位置";
+  }
+  return new Promise((resolve) => {
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        try {
+          await api(`/api/members/${encodeURIComponent(state.memberId)}/location`, {
+            method: "POST",
+            body: {
+              displayName: state.displayName,
+              latitude: position.coords.latitude,
+              longitude: position.coords.longitude
+            }
+          });
+          localStorage.setItem("miemie.locationAutoSyncEnabled", "true");
+          await loadStatus();
+          resolve(true);
+        } catch (error) {
+          if (!quiet) {
+            elements.statusText.textContent = error.message || "位置同步失败";
+          }
+          resolve(false);
         }
-      });
-      await loadStatus();
-    },
-    () => {
-      elements.statusText.textContent = "定位没有授权，距离暂时无法更新";
-    },
-    { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
-  );
+      },
+      () => {
+        if (!quiet) {
+          elements.statusText.textContent = "定位没有授权，距离暂时无法更新";
+        }
+        resolve(false);
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+    );
+  });
+}
+
+async function canAutoSyncLocation() {
+  if (!("permissions" in navigator)) {
+    return true;
+  }
+
+  try {
+    const permission = await navigator.permissions.query({ name: "geolocation" });
+    return permission.state === "granted";
+  } catch {
+    return true;
+  }
 }
 
 async function loadStatus() {
@@ -333,7 +511,7 @@ function connectEvents() {
   });
   eventSource.addEventListener("message", async (event) => {
     const familyEvent = JSON.parse(event.data);
-    await Promise.all([loadPosts(), loadStatus()]);
+    await refreshAll();
     notifyForEvent(familyEvent);
   });
   eventSource.addEventListener("error", () => {
@@ -424,6 +602,12 @@ function notificationMessage(event) {
     return {
       title: "miemie 距离更新",
       body: `${event.member.displayName} 刚刚同步了位置`
+    };
+  }
+  if (event.type === "comment-added") {
+    return {
+      title: "miemie 有新回复",
+      body: `${event.comment.authorName}：${event.comment.body}`
     };
   }
   return null;

@@ -132,3 +132,38 @@ test("stores push subscriptions and excludes the acting member", async () => {
     assert.equal(subscriptions[0].subscription.endpoint, "https://push.example/baba");
   });
 });
+
+test("adds comments to message posts and records a comment event", async () => {
+  await withStore(async (store) => {
+    const { post } = await store.createPost({
+      kind: "message",
+      title: "今晚吃面",
+      body: "记得早点回家",
+      authorName: "妈妈"
+    });
+
+    const result = await store.addComment(post.id, {
+      body: "收到 ❤️",
+      authorName: "爸爸",
+      authorMemberId: "baba"
+    });
+
+    assert.equal(result.comment.body, "收到 ❤️");
+    assert.equal(result.comment.authorName, "爸爸");
+    assert.equal(result.post.comments.length, 1);
+    assert.equal(result.event.type, "comment-added");
+    assert.equal(result.event.comment.id, result.comment.id);
+    assert.equal(result.event.actorMemberId, "baba");
+  });
+});
+
+test("rejects comments on non-message posts", async () => {
+  await withStore(async (store) => {
+    const { post } = await store.createPost({ kind: "todo", title: "买牛奶", body: "", authorName: "妈妈" });
+
+    await assert.rejects(
+      () => store.addComment(post.id, { body: "好", authorName: "爸爸", authorMemberId: "baba" }),
+      /message post not found/
+    );
+  });
+});

@@ -463,6 +463,83 @@ h1 {
   display: block;
 }
 
+.comments-section {
+  display: grid;
+  gap: 9px;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--line);
+}
+
+.comments-list {
+  display: grid;
+  gap: 7px;
+}
+
+.comment-item {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 6px;
+  align-items: baseline;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.comment-item strong {
+  color: var(--ink);
+}
+
+.comment-item time {
+  font-size: 11px;
+}
+
+.comment-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+}
+
+.comment-form textarea {
+  min-height: 38px;
+  padding: 9px 10px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: white;
+  color: var(--ink);
+  resize: vertical;
+  outline: none;
+}
+
+.comment-form > button {
+  align-self: start;
+  min-height: 38px;
+  padding: 0 12px;
+  border-radius: 14px;
+  background: var(--mint);
+  color: var(--ink);
+  font-weight: 900;
+}
+
+.emoji-row {
+  display: flex;
+  grid-column: 1 / -1;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 1px;
+}
+
+.emoji-row button {
+  display: grid;
+  place-items: center;
+  flex: 0 0 34px;
+  width: 34px;
+  height: 34px;
+  border-radius: 12px;
+  background: rgba(204, 232, 245, 0.72);
+  font-size: 17px;
+}
+
 @media (min-width: 760px) {
   .app-shell {
     padding-top: 24px;

@@ -80,6 +80,13 @@ export function createServer({
         return sendJson(response, 200, result);
       }
 
+      const commentMatch = url.pathname.match(/^\/api\/posts\/([^/]+)\/comments$/);
+      if (request.method === "POST" && commentMatch) {
+        const result = await store.addComment(decodeURIComponent(commentMatch[1]), await readJson(request));
+        await publishChange({ events, store, pushNotifier, event: result.event });
+        return sendJson(response, 201, result);
+      }
+
       if (request.method === "POST" && url.pathname === "/api/uploads") {
         const result = await saveUpload(await readJson(request), uploadDir);
         return sendJson(response, 201, result);
@@ -180,7 +187,7 @@ async function sendBackgroundPush({ store, pushNotifier, event }) {
 }
 
 function actorMemberIdForEvent(event) {
-  return event.post?.authorMemberId ?? event.actorMemberId ?? event.member?.id ?? "";
+  return event.actorMemberId ?? event.post?.authorMemberId ?? event.member?.id ?? "";
 }
 
 function pushPayloadForEvent(event) {
@@ -202,6 +209,13 @@ function pushPayloadForEvent(event) {
     return {
       title: "miemie 距离更新",
       body: `${event.member.displayName} 刚刚同步了位置`,
+      url: "/"
+    };
+  }
+  if (event.type === "comment-added") {
+    return {
+      title: "miemie 有新回复",
+      body: `${event.comment.authorName}：${event.comment.body}`,
       url: "/"
     };
   }
