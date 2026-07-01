@@ -4,6 +4,7 @@
 DerivedData/
 DerivedDataDevice/
 DerivedDataDeviceSigned/
+web/data/
 *.xcresult
 *.xcuserstate
 xcuserdata/

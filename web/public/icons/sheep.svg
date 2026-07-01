@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-label="miemie sheep icon">
+  <rect width="1024" height="1024" rx="232" fill="#d7f1e4"/>
+  <circle cx="250" cy="240" r="124" fill="#cce8f5"/>
+  <circle cx="774" cy="760" r="120" fill="#fff1b4"/>
+  <rect x="158" y="188" width="708" height="660" rx="190" fill="#fffef8"/>
+  <ellipse cx="512" cy="764" rx="264" ry="50" fill="#abd8c9"/>
+  <g fill="#fffef8" stroke="#d7f1e4" stroke-width="8">
+    <circle cx="290" cy="430" r="104"/>
+    <circle cx="360" cy="318" r="116"/>
+    <circle cx="504" cy="270" r="130"/>
+    <circle cx="646" cy="318" r="118"/>
+    <circle cx="728" cy="430" r="106"/>
+    <circle cx="316" cy="558" r="126"/>
+    <circle cx="512" cy="560" r="168"/>
+    <circle cx="704" cy="558" r="126"/>
+  </g>
+  <ellipse cx="326" cy="546" rx="66" ry="86" fill="#ffb5a6"/>
+  <ellipse cx="698" cy="546" rx="66" ry="86" fill="#ffb5a6"/>
+  <ellipse cx="512" cy="544" rx="176" ry="192" fill="#ffe5d6"/>
+  <g fill="#fffef8" stroke="#d7f1e4" stroke-width="7">
+    <circle cx="390" cy="336" r="76"/>
+    <circle cx="484" cy="304" r="86"/>
+    <circle cx="578" cy="334" r="76"/>
+  </g>
+  <circle cx="444" cy="522" r="22" fill="#274e45"/>
+  <circle cx="580" cy="522" r="22" fill="#274e45"/>
+  <circle cx="438" cy="516" r="7" fill="#fffef8"/>
+  <circle cx="574" cy="516" r="7" fill="#fffef8"/>
+  <ellipse cx="431" cy="596" rx="27" ry="21" fill="#ffb5a6"/>
+  <ellipse cx="593" cy="596" rx="27" ry="21" fill="#ffb5a6"/>
+  <rect x="490" y="552" width="44" height="28" rx="14" fill="#274e45"/>
+  <path d="M476 612c18 34 54 34 72 0" fill="none" stroke="#274e45" stroke-width="9" stroke-linecap="round"/>
+  <rect x="380" y="724" width="80" height="66" rx="30" fill="#274e45"/>
+  <rect x="564" y="724" width="80" height="66" rx="30" fill="#274e45"/>
+  <rect x="394" y="708" width="236" height="52" rx="26" fill="#fffef8"/>
+</svg>

@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: miemie-pwa
+    runtime: node
+    plan: starter
+    region: singapore
+    rootDir: web
+    buildCommand: echo "No build step required"
+    startCommand: node server/index.mjs
+    healthCheckPath: /healthz
+    envVars:
+      - key: NODE_VERSION
+        value: 24
+      - key: DATA_DIR
+        value: /var/data/miemie
+      - key: FAMILY_CODE
+        sync: false
+    disk:
+      name: miemie-data
+      mountPath: /var/data
+      sizeGB: 1

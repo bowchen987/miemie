@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#d7f1e4">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="miemie">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <title>miemie</title>
+    <link rel="manifest" href="/manifest.webmanifest">
+    <link rel="icon" href="/icons/sheep.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/icons/app-icon.png">
+    <link rel="stylesheet" href="/styles.css">
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="topbar">
+        <div>
+          <h1>miemie</h1>
+          <p>今天也要好好照顾我们的小家</p>
+        </div>
+        <div class="family-badges" aria-label="家庭成员">
+          <span>妈</span>
+          <span>爸</span>
+          <span>宝</span>
+        </div>
+      </header>
+
+      <section id="accessPanel" class="access-panel" hidden>
+        <div>
+          <h2>家庭访问码</h2>
+          <p>输入两台手机共用的访问码，保护小家的内容。</p>
+        </div>
+        <label>
+          <span>访问码</span>
+          <input id="familyCodeInput" autocomplete="one-time-code" inputmode="text">
+        </label>
+        <button id="saveFamilyCodeButton" class="primary-button" type="button">进入 miemie</button>
+      </section>
+
+      <section class="identity-panel" aria-label="我的身份">
+        <label>
+          <span>我是</span>
+          <input id="displayNameInput" autocomplete="nickname" maxlength="12">
+        </label>
+        <button id="saveNameButton" type="button">保存</button>
+      </section>
+
+      <section class="distance-card" aria-label="距离状态">
+        <div>
+          <span class="eyebrow">现在的距离</span>
+          <strong id="distanceText">等待同步</strong>
+          <p id="statusText">打开定位后，双方会看到最近一次距离</p>
+        </div>
+        <div class="route-sticker" aria-hidden="true">
+          <span></span>
+          <span></span>
+        </div>
+        <div class="status-actions">
+          <button id="shareLocationButton" type="button">同步位置</button>
+          <button id="enableNotifyButton" type="button">开启通知</button>
+        </div>
+      </section>
+
+      <section class="quick-actions" aria-label="快速新增">
+        <button type="button" data-compose-kind="todo">
+          <span class="action-icon">✓</span>
+          <span>待办</span>
+        </button>
+        <button type="button" data-compose-kind="resource">
+          <span class="action-icon">▣</span>
+          <span>资料</span>
+        </button>
+        <button type="button" data-compose-kind="message">
+          <span class="action-icon">✉</span>
+          <span>留言</span>
+        </button>
+      </section>
+
+      <section id="composer" class="composer" hidden>
+        <div class="section-heading">
+          <h2 id="composerTitle">发布</h2>
+          <button id="closeComposerButton" type="button" aria-label="关闭发布框">×</button>
+        </div>
+        <form id="postForm">
+          <input id="postTitleInput" name="title" placeholder="写一个标题" maxlength="40" required>
+          <textarea id="postBodyInput" name="body" rows="4" placeholder="补充一点细节"></textarea>
+          <label class="file-field">
+            <span>添加照片</span>
+            <input id="photoInput" name="photo" type="file" accept="image/*">
+          </label>
+          <button class="primary-button" type="submit">发布到 miemie</button>
+        </form>
+      </section>
+
+      <section class="feed-section">
+        <nav class="filter-tabs" aria-label="查看分类">
+          <button class="active" type="button" data-filter="all">全部</button>
+          <button type="button" data-filter="todo">待办</button>
+          <button type="button" data-filter="resource">资料</button>
+          <button type="button" data-filter="message">留言</button>
+        </nav>
+        <div class="section-heading">
+          <h2 id="feedTitle">今天的小纸条</h2>
+          <span id="connectionState">连接中</span>
+        </div>
+        <div id="feedList" class="feed-list" aria-live="polite"></div>
+      </section>
+    </main>
+
+    <template id="postTemplate">
+      <article class="post-card">
+        <div class="post-meta">
+          <span class="post-kind"></span>
+          <span class="post-author"></span>
+          <time class="post-time"></time>
+        </div>
+        <div class="post-title-row">
+          <h3></h3>
+          <button class="todo-toggle" type="button"></button>
+        </div>
+        <p class="post-body"></p>
+        <img class="post-image" alt="家庭资料照片">
+      </article>
+    </template>
+
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>

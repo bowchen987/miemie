@@ -1,0 +1,26 @@
+{
+  "id": "/",
+  "name": "miemie",
+  "short_name": "miemie",
+  "description": "夫妻家庭待办、资料、留言和距离同步",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f4fbf6",
+  "theme_color": "#d7f1e4",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/icons/app-icon.png",
+      "sizes": "1024x1024",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/sheep.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

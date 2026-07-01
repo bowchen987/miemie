@@ -1,0 +1,466 @@
+:root {
+  color-scheme: light;
+  --background: #f4fbf6;
+  --paper: #fffef8;
+  --mint: #d7f1e4;
+  --mint-strong: #60be9e;
+  --coral: #ffb5a6;
+  --lemon: #fff1b4;
+  --sky: #cce8f5;
+  --ink: #274e45;
+  --muted: #6d8a82;
+  --line: rgba(39, 78, 69, 0.12);
+  --shadow: rgba(96, 190, 158, 0.18);
+  font-family: ui-rounded, "SF Pro Rounded", "PingFang SC", system-ui, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--background);
+  color: var(--ink);
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+button {
+  border: 0;
+  cursor: pointer;
+}
+
+.app-shell {
+  width: min(100%, 520px);
+  margin: 0 auto;
+  padding: max(12px, env(safe-area-inset-top)) 18px max(28px, env(safe-area-inset-bottom));
+}
+
+.topbar,
+.section-heading,
+.post-meta,
+.post-title-row,
+.status-actions,
+.identity-panel {
+  display: flex;
+  align-items: center;
+}
+
+.topbar {
+  gap: 14px;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+
+h1 {
+  font-size: 28px;
+  line-height: 1.08;
+}
+
+.topbar p,
+.distance-card p,
+.post-body,
+.post-meta,
+.section-heading span {
+  color: var(--muted);
+}
+
+.topbar p {
+  margin-top: 4px;
+  font-size: 14px;
+}
+
+.family-badges {
+  display: flex;
+  flex-shrink: 0;
+}
+
+.family-badges span {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  margin-left: -6px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--paper);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.family-badges span:nth-child(2) {
+  background: var(--mint);
+}
+
+.family-badges span:nth-child(3) {
+  background: var(--lemon);
+}
+
+.identity-panel {
+  gap: 10px;
+  margin-bottom: 12px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: rgba(255, 254, 248, 0.74);
+}
+
+.identity-panel label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex: 1;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.access-panel input,
+.identity-panel input,
+.composer input,
+.composer textarea {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: white;
+  color: var(--ink);
+  outline: none;
+}
+
+.identity-panel input {
+  min-width: 0;
+  padding: 9px 10px;
+}
+
+.identity-panel button,
+.status-actions button,
+.filter-tabs button,
+.todo-toggle,
+#closeComposerButton {
+  color: var(--ink);
+  font-weight: 800;
+}
+
+.identity-panel button,
+.status-actions button {
+  padding: 9px 12px;
+  border-radius: 999px;
+  background: var(--mint);
+}
+
+.distance-card {
+  margin-bottom: 14px;
+  padding: 18px;
+  border-radius: 26px;
+  background: linear-gradient(135deg, var(--mint), var(--background) 52%, rgba(255, 241, 180, 0.72));
+  box-shadow: 0 16px 32px var(--shadow);
+}
+
+.eyebrow {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+#distanceText {
+  display: block;
+  font-size: clamp(34px, 11vw, 48px);
+  line-height: 1;
+}
+
+.route-sticker {
+  position: relative;
+  width: 94px;
+  height: 58px;
+  margin: 14px 0 0 auto;
+  border-radius: 18px;
+  background: rgba(255, 254, 248, 0.78);
+}
+
+.route-sticker::before {
+  content: "";
+  position: absolute;
+  inset: 18px 22px;
+  border-top: 3px dashed rgba(39, 78, 69, 0.32);
+  transform: rotate(-17deg);
+}
+
+.route-sticker span {
+  position: absolute;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+}
+
+.route-sticker span:first-child {
+  left: 20px;
+  bottom: 13px;
+  background: var(--coral);
+}
+
+.route-sticker span:last-child {
+  right: 19px;
+  top: 13px;
+  background: var(--mint-strong);
+}
+
+.status-actions {
+  gap: 8px;
+  margin-top: 14px;
+  flex-wrap: wrap;
+}
+
+.quick-actions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.quick-actions button {
+  min-height: 88px;
+  padding: 12px 8px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--paper);
+  color: var(--ink);
+  font-weight: 900;
+}
+
+.action-icon {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  margin: 0 auto 8px;
+  border-radius: 12px;
+  background: var(--lemon);
+}
+
+.quick-actions button:nth-child(2) .action-icon {
+  background: rgba(255, 181, 166, 0.72);
+}
+
+.quick-actions button:nth-child(3) .action-icon {
+  background: var(--sky);
+}
+
+.access-panel,
+.composer,
+.post-card,
+.feed-section {
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--paper);
+}
+
+.access-panel {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 14px;
+  padding: 14px;
+}
+
+.access-panel[hidden] {
+  display: none;
+}
+
+.access-panel h2 {
+  font-size: 18px;
+}
+
+.access-panel p {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.access-panel label {
+  display: grid;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.access-panel input {
+  padding: 12px;
+}
+
+.composer {
+  margin-bottom: 14px;
+  padding: 14px;
+}
+
+.section-heading {
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.section-heading h2 {
+  font-size: 18px;
+}
+
+#closeComposerButton {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--mint);
+  font-size: 22px;
+}
+
+.composer form {
+  display: grid;
+  gap: 10px;
+}
+
+.composer input,
+.composer textarea {
+  padding: 12px;
+}
+
+.composer textarea {
+  resize: vertical;
+}
+
+.file-field {
+  display: grid;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.primary-button {
+  padding: 13px 14px;
+  border-radius: 16px;
+  background: var(--mint-strong);
+  color: white;
+  font-weight: 900;
+}
+
+.feed-section {
+  padding: 12px;
+}
+
+.filter-tabs {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+  margin-bottom: 12px;
+  padding: 5px;
+  border-radius: 16px;
+  background: rgba(215, 241, 228, 0.64);
+}
+
+.filter-tabs button {
+  min-height: 34px;
+  border-radius: 12px;
+  background: transparent;
+}
+
+.filter-tabs button.active {
+  background: var(--paper);
+  box-shadow: 0 8px 18px rgba(39, 78, 69, 0.08);
+}
+
+.feed-list {
+  display: grid;
+  gap: 10px;
+}
+
+.empty-state {
+  padding: 16px 12px;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.post-card {
+  padding: 14px;
+}
+
+.post-meta {
+  gap: 8px;
+  margin-bottom: 8px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.post-time {
+  margin-left: auto;
+}
+
+.post-title-row {
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.post-title-row h3 {
+  flex: 1;
+  font-size: 16px;
+  line-height: 1.35;
+}
+
+.post-card.completed h3 {
+  color: var(--muted);
+  text-decoration: line-through;
+}
+
+.todo-toggle {
+  flex-shrink: 0;
+  padding: 7px 9px;
+  border-radius: 999px;
+  background: var(--lemon);
+  font-size: 12px;
+}
+
+.post-card.completed .todo-toggle {
+  background: var(--mint);
+}
+
+.post-body {
+  margin-top: 7px;
+  font-size: 14px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+.post-image {
+  display: none;
+  width: 100%;
+  max-height: 220px;
+  margin-top: 10px;
+  border-radius: 16px;
+  object-fit: cover;
+  background: var(--mint);
+}
+
+.post-image[src] {
+  display: block;
+}
+
+@media (min-width: 760px) {
+  .app-shell {
+    padding-top: 24px;
+  }
+}
