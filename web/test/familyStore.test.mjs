@@ -112,3 +112,23 @@ test("updates member locations and reports distance between two members", async 
     assert.equal(status.distanceMeters < 120, true);
   });
 });
+
+test("stores push subscriptions and excludes the acting member", async () => {
+  await withStore(async (store) => {
+    await store.savePushSubscription({
+      memberId: "mama",
+      displayName: "妈妈",
+      subscription: { endpoint: "https://push.example/mama", keys: { p256dh: "key", auth: "auth" } }
+    });
+    await store.savePushSubscription({
+      memberId: "baba",
+      displayName: "爸爸",
+      subscription: { endpoint: "https://push.example/baba", keys: { p256dh: "key", auth: "auth" } }
+    });
+
+    const subscriptions = await store.listPushSubscriptions({ excludingMemberId: "mama" });
+
+    assert.deepEqual(subscriptions.map((item) => item.memberId), ["baba"]);
+    assert.equal(subscriptions[0].subscription.endpoint, "https://push.example/baba");
+  });
+});

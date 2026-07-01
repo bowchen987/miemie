@@ -7,8 +7,13 @@ This is the no-Apple-Developer-account trial version of miemie.
 From the project root:
 
 ```sh
+cd web
+npm install
+cd ..
 ./scripts/start_pwa.sh
 ```
+
+If you use pnpm locally, run `pnpm install` inside `web/` instead of `npm install`.
 
 The default address is:
 
@@ -41,15 +46,25 @@ The repo includes a Render Blueprint at `../render.yaml`.
 2. Open Render Dashboard and create a new Blueprint from that repository.
 3. Render will create one Node web service named `miemie-pwa`.
 4. Fill the `FAMILY_CODE` secret when Render prompts for it. Both phones will enter this same code.
-5. The service uses `DATA_DIR=/var/data/miemie` and a 1 GB persistent disk mounted at `/var/data`.
-6. After deploy, open the `https://*.onrender.com` URL on both iPhones in Safari.
-7. Use Safari's Share menu to add miemie to the Home Screen.
+5. Generate Web Push VAPID keys:
+
+```sh
+npm run vapid:keys
+```
+
+If you use pnpm locally, run `pnpm vapid:keys` instead.
+
+6. Fill `VAPID_PUBLIC_KEY` and `VAPID_PRIVATE_KEY` in Render with the generated values.
+7. The service uses `DATA_DIR=/var/data/miemie` and a 1 GB persistent disk mounted at `/var/data`.
+8. After deploy, open the `https://*.onrender.com` URL on both iPhones in Safari.
+9. Use Safari's Share menu to add miemie to the Home Screen.
+10. Open miemie from the Home Screen, enter a name, then tap "开启通知" on each phone.
 
 This setup is intended for daily use because posts and uploaded photos survive deploys and restarts. Render persistent disks are only available on paid services, and the disk keeps the service single-instance.
 
 ## Production Notes
 
-- iOS Web Push for background notifications requires HTTPS and a Web Push subscription flow.
+- iOS Web Push for background notifications requires HTTPS, a Home Screen web app, and the user tapping the notification button.
 - HTTPS is required for reliable Home Screen PWA, geolocation, and notification behavior.
 - Local development stores data in `web/data/`, which is intentionally ignored by git.
 - Public deployment stores data under `DATA_DIR`.

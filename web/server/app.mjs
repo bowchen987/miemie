@@ -16,7 +16,20 @@ const MIME_TYPES = new Map([
 
 const MAX_BODY_BYTES = 8 * 1024 * 1024;
 
-export function createServer({ store, publicDir, uploadDir = path.join(store.dataDir, "uploads"), familyCode = "" }) {
+const KIND_TITLES = {
+  todo: "待办",
+  resource: "资料",
+  message: "留言",
+  photo: "照片"
+};
+
+export function createServer({
+  store,
+  publicDir,
+  uploadDir = path.join(store.dataDir, "uploads"),
+  familyCode = "",
+  pushNotifier = null
+}) {
   const events = new Set();
   const requiredFamilyCode = familyCode.trim();
 
@@ -41,17 +54,29 @@ export function createServer({ store, publicDir, uploadDir = path.join(store.dat
         return sendJson(response, 200, await store.familyStatus());
       }
 
+      if (request.method === "GET" && url.pathname === "/api/push/public-key") {
+        return sendJson(response, 200, {
+          enabled: Boolean(pushNotifier?.publicKey),
+          publicKey: pushNotifier?.publicKey ?? ""
+        });
+      }
+
+      if (request.method === "POST" && url.pathname === "/api/push/subscriptions") {
+        const result = await store.savePushSubscription(await readJson(request));
+        return sendJson(response, 201, { subscription: result });
+      }
+
       if (request.method === "POST" && url.pathname === "/api/posts") {
         const input = await readJson(request);
         const result = await store.createPost(input);
-        publish(events, result.event);
+        await publishChange({ events, store, pushNotifier, event: result.event });
         return sendJson(response, 201, result);
       }
 
       const toggleMatch = url.pathname.match(/^\/api\/posts\/([^/]+)\/toggle$/);
       if (request.method === "PATCH" && toggleMatch) {
-        const result = await store.toggleTodo(decodeURIComponent(toggleMatch[1]));
-        publish(events, result.event);
+        const result = await store.toggleTodo(decodeURIComponent(toggleMatch[1]), await readJson(request));
+        await publishChange({ events, store, pushNotifier, event: result.event });
         return sendJson(response, 200, result);
       }
 
@@ -67,7 +92,7 @@ export function createServer({ store, publicDir, uploadDir = path.join(store.dat
           ...input,
           memberId: decodeURIComponent(locationMatch[1])
         });
-        publish(events, result.event);
+        await publishChange({ events, store, pushNotifier, event: result.event });
         return sendJson(response, 200, result);
       }
 
@@ -131,6 +156,56 @@ function publish(events, event) {
   for (const response of events) {
     response.write(payload);
   }
+}
+
+async function publishChange({ events, store, pushNotifier, event }) {
+  publish(events, event);
+  await sendBackgroundPush({ store, pushNotifier, event });
+}
+
+async function sendBackgroundPush({ store, pushNotifier, event }) {
+  if (!pushNotifier) {
+    return;
+  }
+
+  const payload = pushPayloadForEvent(event);
+  if (!payload) {
+    return;
+  }
+
+  const subscriptions = await store.listPushSubscriptions({ excludingMemberId: actorMemberIdForEvent(event) });
+  await Promise.all(
+    subscriptions.map((item) => pushNotifier.sendNotification(item.subscription, payload).catch(() => {}))
+  );
+}
+
+function actorMemberIdForEvent(event) {
+  return event.post?.authorMemberId ?? event.actorMemberId ?? event.member?.id ?? "";
+}
+
+function pushPayloadForEvent(event) {
+  if (event.type === "post-added") {
+    return {
+      title: `miemie 有新${KIND_TITLES[event.post.kind] || "内容"}`,
+      body: event.post.title,
+      url: "/"
+    };
+  }
+  if (event.type === "todo-status-updated") {
+    return {
+      title: "miemie 待办状态更新",
+      body: `${event.post.title}：${event.post.todoStatus === "completed" ? "已完成" : "未完成"}`,
+      url: "/"
+    };
+  }
+  if (event.type === "member-location-updated") {
+    return {
+      title: "miemie 距离更新",
+      body: `${event.member.displayName} 刚刚同步了位置`,
+      url: "/"
+    };
+  }
+  return null;
 }
 
 function openEventStream(response, events) {

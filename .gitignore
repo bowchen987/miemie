@@ -4,6 +4,7 @@
 DerivedData/
 DerivedDataDevice/
 DerivedDataDeviceSigned/
+node_modules/
 web/data/
 *.xcresult
 *.xcuserstate

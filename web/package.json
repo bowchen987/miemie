@@ -5,6 +5,10 @@
   "type": "module",
   "scripts": {
     "start": "node server/index.mjs",
-    "test": "node --test"
+    "test": "node --test",
+    "vapid:keys": "web-push generate-vapid-keys"
+  },
+  "dependencies": {
+    "web-push": "3.6.7"
   }
 }

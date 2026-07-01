@@ -12,6 +12,7 @@ export class FamilyStore {
     this.now = now;
     this.posts = [];
     this.members = {};
+    this.pushSubscriptions = [];
     this.ready = this.load();
   }
 
@@ -39,6 +40,7 @@ export class FamilyStore {
       title,
       body,
       authorName,
+      authorMemberId: this.clean(input.authorMemberId) || null,
       createdAt: this.now().toISOString(),
       hasPhoto: Boolean(input.hasPhoto),
       imageUrl: input.imageUrl ?? null
@@ -53,7 +55,7 @@ export class FamilyStore {
     };
   }
 
-  async toggleTodo(id) {
+  async toggleTodo(id, input = {}) {
     const post = this.posts.find((item) => item.id === id);
     if (!post || post.kind !== "todo") {
       throw new Error("todo not found");
@@ -64,7 +66,10 @@ export class FamilyStore {
 
     return {
       post,
-      event: this.event("todo-status-updated", post)
+      event: {
+        ...this.event("todo-status-updated", post),
+        actorMemberId: this.clean(input.actorMemberId) || null
+      }
     };
   }
 
@@ -102,6 +107,36 @@ export class FamilyStore {
     };
   }
 
+  async savePushSubscription(input) {
+    const memberId = this.clean(input.memberId);
+    const displayName = this.clean(input.displayName) || memberId || "我";
+    const subscription = input.subscription;
+    const endpoint = this.clean(subscription?.endpoint);
+
+    if (!memberId) {
+      throw new Error("memberId is required");
+    }
+    if (!endpoint) {
+      throw new Error("push subscription endpoint is required");
+    }
+
+    const item = {
+      memberId,
+      displayName,
+      subscription,
+      updatedAt: this.now().toISOString()
+    };
+    this.pushSubscriptions = this.pushSubscriptions.filter((existing) => existing.subscription?.endpoint !== endpoint);
+    this.pushSubscriptions.push(item);
+    await this.save();
+
+    return item;
+  }
+
+  async listPushSubscriptions({ excludingMemberId = "" } = {}) {
+    return this.pushSubscriptions.filter((item) => item.memberId !== excludingMemberId);
+  }
+
   async familyStatus() {
     const members = Object.values(this.members).sort((left, right) => left.displayName.localeCompare(right.displayName));
     return {
@@ -118,18 +153,23 @@ export class FamilyStore {
       const data = JSON.parse(raw);
       this.posts = Array.isArray(data.posts) ? data.posts : [];
       this.members = data.members && typeof data.members === "object" ? data.members : {};
+      this.pushSubscriptions = Array.isArray(data.pushSubscriptions) ? data.pushSubscriptions : [];
     } catch (error) {
       if (error.code !== "ENOENT") {
         throw error;
       }
       this.posts = [];
       this.members = {};
+      this.pushSubscriptions = [];
       await this.save();
     }
   }
 
   async save() {
-    await writeFile(this.filePath, JSON.stringify({ posts: this.posts, members: this.members }, null, 2));
+    await writeFile(
+      this.filePath,
+      JSON.stringify({ posts: this.posts, members: this.members, pushSubscriptions: this.pushSubscriptions }, null, 2)
+    );
   }
 
   clean(value) {

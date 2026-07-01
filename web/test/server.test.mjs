@@ -14,7 +14,8 @@ async function withHttpServer(run, options = {}) {
   const server = createServer({
     store,
     publicDir: path.join(process.cwd(), "public"),
-    familyCode: options.familyCode
+    familyCode: options.familyCode,
+    pushNotifier: options.pushNotifier
   });
 
   await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
@@ -135,4 +136,54 @@ test("updates member locations through the HTTP API", async () => {
     const status = await statusResponse.json();
     assert.equal(status.members.length, 1);
   });
+});
+
+test("registers push subscriptions and notifies other members when posts change", async () => {
+  const sent = [];
+
+  await withHttpServer(async (baseUrl) => {
+    const keyResponse = await fetch(`${baseUrl}/api/push/public-key`);
+    assert.equal(keyResponse.status, 200);
+    assert.deepEqual(await keyResponse.json(), { enabled: true, publicKey: "test-public-key" });
+
+    for (const memberId of ["mama", "baba"]) {
+      const response = await fetch(`${baseUrl}/api/push/subscriptions`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          memberId,
+          displayName: memberId === "mama" ? "妈妈" : "爸爸",
+          subscription: { endpoint: `https://push.example/${memberId}`, keys: { p256dh: "key", auth: "auth" } }
+        })
+      });
+
+      assert.equal(response.status, 201);
+    }
+
+    const createResponse = await fetch(`${baseUrl}/api/posts`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        kind: "message",
+        title: "早点回家",
+        body: "今晚吃面",
+        authorName: "妈妈",
+        authorMemberId: "mama"
+      })
+    });
+
+    assert.equal(createResponse.status, 201);
+  }, {
+    pushNotifier: {
+      publicKey: "test-public-key",
+      sendNotification: async (subscription, payload) => {
+        sent.push({ subscription, payload });
+      }
+    }
+  });
+
+  assert.equal(sent.length, 1);
+  assert.equal(sent[0].subscription.endpoint, "https://push.example/baba");
+  assert.equal(sent[0].payload.title, "miemie 有新留言");
+  assert.equal(sent[0].payload.body, "早点回家");
 });

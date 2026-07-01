@@ -17,12 +17,13 @@ const state = {
   composeKind: "message",
   posts: [],
   memberId: localStorage.getItem("miemie.memberId") || crypto.randomUUID(),
-  displayName: localStorage.getItem("miemie.displayName") || "妈妈",
+  displayName: localStorage.getItem("miemie.displayName") || "",
   familyCode: localStorage.getItem("miemie.familyCode") || ""
 };
 
 localStorage.setItem("miemie.memberId", state.memberId);
 let eventSource;
+let serviceWorkerRegistration;
 
 const elements = {
   connectionState: document.querySelector("#connectionState"),
@@ -35,6 +36,7 @@ const elements = {
   familyCodeInput: document.querySelector("#familyCodeInput"),
   feedList: document.querySelector("#feedList"),
   feedTitle: document.querySelector("#feedTitle"),
+  identityPanel: document.querySelector("#identityPanel"),
   photoInput: document.querySelector("#photoInput"),
   postBodyInput: document.querySelector("#postBodyInput"),
   postForm: document.querySelector("#postForm"),
@@ -51,8 +53,9 @@ init();
 async function init() {
   elements.displayNameInput.value = state.displayName;
   elements.familyCodeInput.value = state.familyCode;
+  elements.identityPanel.hidden = Boolean(state.displayName);
   bindEvents();
-  registerServiceWorker();
+  serviceWorkerRegistration = await registerServiceWorker();
   try {
     await Promise.all([loadPosts(), loadStatus()]);
     connectEvents();
@@ -89,8 +92,9 @@ function bindEvents() {
 
 function registerServiceWorker() {
   if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("/sw.js").catch(() => {});
+    return navigator.serviceWorker.register("/sw.js").catch(() => null);
   }
+  return Promise.resolve(null);
 }
 
 function openComposer(kind) {
@@ -116,6 +120,10 @@ function placeholderForKind(kind) {
 
 async function submitPost(event) {
   event.preventDefault();
+  if (!ensureDisplayName()) {
+    return;
+  }
+
   const title = elements.postTitleInput.value.trim();
   const body = elements.postBodyInput.value.trim();
   if (!title) {
@@ -133,6 +141,7 @@ async function submitPost(event) {
       title,
       body,
       authorName: state.displayName,
+      authorMemberId: state.memberId,
       hasPhoto: Boolean(imageUrl),
       imageUrl
     }
@@ -216,7 +225,10 @@ function renderPost(post) {
 }
 
 async function toggleTodo(id) {
-  await api(`/api/posts/${encodeURIComponent(id)}/toggle`, { method: "PATCH" });
+  await api(`/api/posts/${encodeURIComponent(id)}/toggle`, {
+    method: "PATCH",
+    body: { actorMemberId: state.memberId }
+  });
   await loadPosts();
 }
 
@@ -227,9 +239,27 @@ function updateFilterTabs() {
 }
 
 function saveDisplayName() {
-  state.displayName = elements.displayNameInput.value.trim() || "我";
+  const displayName = elements.displayNameInput.value.trim();
+  if (!displayName) {
+    elements.displayNameInput.focus();
+    return false;
+  }
+
+  state.displayName = displayName;
   localStorage.setItem("miemie.displayName", state.displayName);
   elements.displayNameInput.value = state.displayName;
+  elements.identityPanel.hidden = true;
+  return true;
+}
+
+function ensureDisplayName() {
+  if (state.displayName) {
+    return true;
+  }
+
+  elements.identityPanel.hidden = false;
+  elements.displayNameInput.focus();
+  return false;
 }
 
 async function saveFamilyCode() {
@@ -241,7 +271,10 @@ async function saveFamilyCode() {
 }
 
 async function shareLocation() {
-  saveDisplayName();
+  if (!ensureDisplayName()) {
+    return;
+  }
+
   if (!("geolocation" in navigator)) {
     elements.statusText.textContent = "当前浏览器不支持定位";
     return;
@@ -309,13 +342,46 @@ function connectEvents() {
 }
 
 async function requestNotificationPermission() {
-  if (!("Notification" in window)) {
+  if (!ensureDisplayName()) {
+    return;
+  }
+
+  if (!("Notification" in window) || !("PushManager" in window) || !("serviceWorker" in navigator)) {
     elements.enableNotifyButton.textContent = "不支持通知";
     return;
   }
 
   const permission = await Notification.requestPermission();
-  elements.enableNotifyButton.textContent = permission === "granted" ? "通知已开" : "通知未开";
+  if (permission !== "granted") {
+    elements.enableNotifyButton.textContent = "通知未开";
+    return;
+  }
+
+  const key = await api("/api/push/public-key");
+  if (!key.enabled) {
+    elements.enableNotifyButton.textContent = "后台通知未配置";
+    return;
+  }
+
+  const registration = serviceWorkerRegistration ?? (await navigator.serviceWorker.ready);
+  const existingSubscription = await registration.pushManager.getSubscription();
+  const subscription =
+    existingSubscription ??
+    (await registration.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(key.publicKey)
+    }));
+
+  await api("/api/push/subscriptions", {
+    method: "POST",
+    body: {
+      memberId: state.memberId,
+      displayName: state.displayName,
+      subscription: subscription.toJSON()
+    }
+  });
+
+  elements.enableNotifyButton.textContent = "后台通知已开";
 }
 
 function notifyForEvent(event) {
@@ -323,7 +389,12 @@ function notifyForEvent(event) {
     return;
   }
 
-  if (event.post?.authorName === state.displayName || event.member?.id === state.memberId) {
+  if (
+    event.post?.authorMemberId === state.memberId ||
+    event.actorMemberId === state.memberId ||
+    event.member?.id === state.memberId ||
+    event.post?.authorName === state.displayName
+  ) {
     return;
   }
 
@@ -413,4 +484,11 @@ function formatRelativeTime(value) {
     return `${minutes} 分钟前`;
   }
   return formatTime(value);
+}
+
+function urlBase64ToUint8Array(value) {
+  const padding = "=".repeat((4 - (value.length % 4)) % 4);
+  const base64 = (value + padding).replace(/-/g, "+").replace(/_/g, "/");
+  const raw = atob(base64);
+  return Uint8Array.from([...raw].map((char) => char.charCodeAt(0)));
 }
