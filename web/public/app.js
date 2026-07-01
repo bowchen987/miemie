@@ -1,3 +1,5 @@
+import { notificationButtonText } from "./notificationUi.js";
+
 const KIND_TITLES = {
   todo: "待办",
   resource: "资料",
@@ -59,6 +61,7 @@ async function init() {
   elements.identityPanel.hidden = Boolean(state.displayName);
   bindEvents();
   serviceWorkerRegistration = await registerServiceWorker();
+  await refreshNotificationButton();
   try {
     await refreshAll();
     lastResumeRefreshAt = Date.now();
@@ -559,7 +562,39 @@ async function requestNotificationPermission() {
     }
   });
 
-  elements.enableNotifyButton.textContent = "后台通知已开";
+  await refreshNotificationButton();
+}
+
+async function refreshNotificationButton() {
+  const supported = "Notification" in window && "PushManager" in window && "serviceWorker" in navigator;
+  if (!supported) {
+    elements.enableNotifyButton.textContent = notificationButtonText({ supported: false });
+    return;
+  }
+
+  let hasSubscription = false;
+  try {
+    const registration = serviceWorkerRegistration ?? (await navigator.serviceWorker.ready);
+    hasSubscription = Boolean(await registration.pushManager.getSubscription());
+  } catch {
+    hasSubscription = false;
+  }
+
+  let pushConfigured = true;
+  if (Notification.permission === "granted") {
+    try {
+      pushConfigured = (await api("/api/push/public-key")).enabled;
+    } catch {
+      pushConfigured = true;
+    }
+  }
+
+  elements.enableNotifyButton.textContent = notificationButtonText({
+    supported,
+    permission: Notification.permission,
+    hasSubscription,
+    pushConfigured
+  });
 }
 
 function notifyForEvent(event) {

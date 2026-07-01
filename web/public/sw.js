@@ -1,9 +1,10 @@
-const CACHE_NAME = "miemie-pwa-v3";
+const CACHE_NAME = "miemie-pwa-v4";
 const ASSETS = [
   "/",
   "/index.html",
   "/styles.css",
   "/app.js",
+  "/notificationUi.js",
   "/manifest.webmanifest",
   "/icons/app-icon.png",
   "/icons/sheep.svg"
