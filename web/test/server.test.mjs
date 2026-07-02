@@ -284,3 +284,64 @@ test("adds message comments through the HTTP API and notifies other members", as
   assert.equal(sent[1].payload.title, "miemie 有新回复");
   assert.equal(sent[1].payload.body, "爸爸：收到 ❤️");
 });
+
+test("adds photo comments through the HTTP API and summarizes push notifications", async () => {
+  const sent = [];
+
+  await withHttpServer(async (baseUrl) => {
+    for (const memberId of ["mama", "baba"]) {
+      const response = await fetch(`${baseUrl}/api/push/subscriptions`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          memberId,
+          displayName: memberId === "mama" ? "妈妈" : "爸爸",
+          subscription: { endpoint: `https://push.example/${memberId}`, keys: { p256dh: "key", auth: "auth" } }
+        })
+      });
+      assert.equal(response.status, 201);
+    }
+
+    const postResponse = await fetch(`${baseUrl}/api/posts`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        kind: "message",
+        title: "今晚吃面",
+        body: "早点回家",
+        authorName: "妈妈",
+        authorMemberId: "mama"
+      })
+    });
+    const created = await postResponse.json();
+
+    const commentResponse = await fetch(`${baseUrl}/api/posts/${created.post.id}/comments`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        body: "",
+        imageUrl: "/uploads/reply-photo.png",
+        authorName: "爸爸",
+        authorMemberId: "baba"
+      })
+    });
+
+    assert.equal(commentResponse.status, 201);
+    const commented = await commentResponse.json();
+    assert.equal(commented.comment.body, "");
+    assert.equal(commented.comment.imageUrl, "/uploads/reply-photo.png");
+    assert.equal(commented.event.type, "comment-added");
+  }, {
+    pushNotifier: {
+      publicKey: "test-public-key",
+      sendNotification: async (subscription, payload) => {
+        sent.push({ subscription, payload });
+      }
+    }
+  });
+
+  assert.equal(sent.length, 2);
+  assert.equal(sent[1].subscription.endpoint, "https://push.example/mama");
+  assert.equal(sent[1].payload.title, "miemie 有新回复");
+  assert.equal(sent[1].payload.body, "爸爸 发来一张照片");
+});

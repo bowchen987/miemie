@@ -280,19 +280,37 @@ function renderComments(post) {
     const list = document.createElement("div");
     list.className = "comments-list";
     for (const comment of comments) {
-      const item = document.createElement("p");
+      const item = document.createElement("div");
       item.className = "comment-item";
 
       const author = document.createElement("strong");
       author.textContent = comment.authorName;
 
+      const content = document.createElement("div");
+      content.className = "comment-content";
+
       const body = document.createElement("span");
-      body.textContent = comment.body;
+      body.textContent = comment.body || (comment.imageUrl ? "发来一张照片" : "");
+      content.append(body);
+
+      if (comment.imageUrl) {
+        const photoButton = document.createElement("button");
+        photoButton.type = "button";
+        photoButton.className = "comment-photo-button";
+        photoButton.setAttribute("aria-label", "查看回复照片");
+        photoButton.addEventListener("click", () => openImagePreview(comment.imageUrl));
+
+        const thumbnail = document.createElement("img");
+        thumbnail.src = comment.imageUrl;
+        thumbnail.alt = "回复照片缩略图";
+        photoButton.append(thumbnail);
+        content.append(photoButton);
+      }
 
       const time = document.createElement("time");
       time.textContent = formatTime(comment.createdAt);
 
-      item.append(author, body, time);
+      item.append(author, content, time);
       list.append(item);
     }
     section.append(list);
@@ -317,12 +335,35 @@ function renderComments(post) {
     emojiRow.append(button);
   }
 
+  const photoInput = document.createElement("input");
+  photoInput.type = "file";
+  photoInput.accept = "image/*";
+  photoInput.className = "comment-photo-input";
+
+  const photoField = document.createElement("label");
+  photoField.className = "comment-photo-field";
+  photoField.setAttribute("aria-label", "添加回复照片");
+  photoField.title = "添加回复照片";
+  const photoIcon = document.createElement("span");
+  photoIcon.textContent = "📷";
+  photoField.append(photoIcon, photoInput);
+  photoInput.addEventListener("change", () => {
+    const hasPhoto = photoInput.files.length > 0;
+    photoField.classList.toggle("has-photo", hasPhoto);
+    photoField.setAttribute("aria-label", hasPhoto ? "已选择回复照片" : "添加回复照片");
+    photoField.title = hasPhoto ? "已选择回复照片" : "添加回复照片";
+  });
+
+  const tools = document.createElement("div");
+  tools.className = "comment-tools";
+  tools.append(emojiRow, photoField);
+
   const submitButton = document.createElement("button");
   submitButton.type = "submit";
   submitButton.textContent = "回复";
 
-  form.append(textarea, submitButton, emojiRow);
-  form.addEventListener("submit", (event) => submitComment(event, post.id, textarea));
+  form.append(textarea, submitButton, tools);
+  form.addEventListener("submit", (event) => submitComment(event, post.id, textarea, photoInput));
   section.append(form);
 
   return section;
@@ -337,27 +378,68 @@ function appendEmoji(textarea, emoji) {
   textarea.focus();
 }
 
-async function submitComment(event, postId, textarea) {
+function openImagePreview(imageUrl) {
+  const overlay = document.createElement("div");
+  overlay.className = "image-preview-overlay";
+
+  const image = document.createElement("img");
+  image.src = imageUrl;
+  image.alt = "回复照片大图";
+
+  const closeButton = document.createElement("button");
+  closeButton.type = "button";
+  closeButton.className = "image-preview-close";
+  closeButton.setAttribute("aria-label", "关闭照片预览");
+  closeButton.textContent = "×";
+
+  const close = () => {
+    overlay.remove();
+    document.removeEventListener("keydown", handleKeydown);
+  };
+  const handleKeydown = (event) => {
+    if (event.key === "Escape") {
+      close();
+    }
+  };
+
+  overlay.addEventListener("click", (event) => {
+    if (event.target === overlay) {
+      close();
+    }
+  });
+  closeButton.addEventListener("click", close);
+  document.addEventListener("keydown", handleKeydown);
+
+  overlay.append(closeButton, image);
+  document.body.append(overlay);
+  closeButton.focus();
+}
+
+async function submitComment(event, postId, textarea, photoInput) {
   event.preventDefault();
   if (!ensureDisplayName()) {
     return;
   }
 
   const body = textarea.value.trim();
-  if (!body) {
+  const file = photoInput.files[0];
+  if (!body && !file) {
     textarea.focus();
     return;
   }
+  const imageUrl = file ? await uploadImage(file) : null;
 
   await api(`/api/posts/${encodeURIComponent(postId)}/comments`, {
     method: "POST",
     body: {
       body,
+      imageUrl,
       authorName: state.displayName,
       authorMemberId: state.memberId
     }
   });
   textarea.value = "";
+  photoInput.value = "";
   await loadPosts();
 }
 
@@ -636,10 +718,20 @@ function notificationMessage(event) {
   if (event.type === "comment-added") {
     return {
       title: "miemie 有新回复",
-      body: `${event.comment.authorName}：${event.comment.body}`
+      body: commentNotificationBody(event.comment)
     };
   }
   return null;
+}
+
+function commentNotificationBody(comment) {
+  if (comment.body) {
+    return `${comment.authorName}：${comment.body}`;
+  }
+  if (comment.imageUrl) {
+    return `${comment.authorName} 发来一张照片`;
+  }
+  return `${comment.authorName} 回复了`;
 }
 
 async function api(path, options = {}) {

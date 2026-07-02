@@ -115,15 +115,17 @@ export class FamilyStore {
     }
 
     const body = this.clean(input.body);
+    const imageUrl = this.clean(input.imageUrl) || null;
     const authorName = this.clean(input.authorName) || "我";
     const authorMemberId = this.clean(input.authorMemberId) || null;
-    if (!body) {
-      throw new Error("comment body is required");
+    if (!body && !imageUrl) {
+      throw new Error("comment body or photo is required");
     }
 
     const comment = {
       id: randomUUID(),
       body,
+      imageUrl,
       authorName,
       authorMemberId,
       createdAt: this.now().toISOString()

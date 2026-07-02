@@ -523,6 +523,39 @@ h1 {
   color: var(--ink);
 }
 
+.comment-content {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+
+.comment-content span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.comment-photo-button {
+  display: block;
+  flex: 0 0 46px;
+  width: 46px;
+  height: 46px;
+  padding: 0;
+  border: 2px solid white;
+  border-radius: 12px;
+  background: var(--sky);
+  box-shadow: 0 6px 16px rgba(39, 78, 69, 0.12);
+  overflow: hidden;
+}
+
+.comment-photo-button img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 .comment-item time {
   font-size: 11px;
 }
@@ -554,9 +587,17 @@ h1 {
   font-weight: 900;
 }
 
-.emoji-row {
+.comment-tools {
   display: flex;
   grid-column: 1 / -1;
+  gap: 8px;
+  align-items: center;
+}
+
+.emoji-row {
+  display: flex;
+  min-width: 0;
+  flex: 1;
   gap: 6px;
   overflow-x: auto;
   padding-bottom: 1px;
@@ -571,6 +612,66 @@ h1 {
   border-radius: 12px;
   background: rgba(204, 232, 245, 0.72);
   font-size: 17px;
+}
+
+.comment-photo-field {
+  position: relative;
+  display: grid;
+  place-items: center;
+  flex: 0 0 34px;
+  width: 34px;
+  height: 34px;
+  border-radius: 12px;
+  background: rgba(255, 181, 166, 0.5);
+  color: var(--ink);
+}
+
+.comment-photo-field.has-photo {
+  background: var(--coral);
+  box-shadow: 0 0 0 2px white inset;
+}
+
+.comment-photo-field input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.image-preview-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  padding: max(18px, env(safe-area-inset-top)) 18px max(18px, env(safe-area-inset-bottom));
+  background: rgba(20, 43, 38, 0.72);
+}
+
+.image-preview-overlay img {
+  display: block;
+  max-width: min(92vw, 520px);
+  max-height: 78vh;
+  border: 4px solid white;
+  border-radius: 18px;
+  object-fit: contain;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.28);
+}
+
+.image-preview-close {
+  position: fixed;
+  top: max(14px, env(safe-area-inset-top));
+  right: 14px;
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 14px;
+  background: white;
+  color: var(--ink);
+  font-size: 24px;
+  line-height: 1;
 }
 
 @media (min-width: 760px) {

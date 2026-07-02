@@ -157,6 +157,40 @@ test("adds comments to message posts and records a comment event", async () => {
   });
 });
 
+test("adds photo comments to message posts", async () => {
+  await withStore(async (store) => {
+    const { post } = await store.createPost({
+      kind: "message",
+      title: "看看这个",
+      body: "",
+      authorName: "妈妈"
+    });
+
+    const result = await store.addComment(post.id, {
+      body: "",
+      imageUrl: "/uploads/reply-photo.png",
+      authorName: "爸爸",
+      authorMemberId: "baba"
+    });
+
+    assert.equal(result.comment.body, "");
+    assert.equal(result.comment.imageUrl, "/uploads/reply-photo.png");
+    assert.equal(result.post.comments[0].imageUrl, "/uploads/reply-photo.png");
+    assert.equal(result.event.comment.imageUrl, "/uploads/reply-photo.png");
+  });
+});
+
+test("rejects empty comments without a photo", async () => {
+  await withStore(async (store) => {
+    const { post } = await store.createPost({ kind: "message", title: "今晚吃面", body: "", authorName: "妈妈" });
+
+    await assert.rejects(
+      () => store.addComment(post.id, { body: "", authorName: "爸爸", authorMemberId: "baba" }),
+      /comment body or photo is required/
+    );
+  });
+});
+
 test("rejects comments on non-message posts", async () => {
   await withStore(async (store) => {
     const { post } = await store.createPost({ kind: "todo", title: "买牛奶", body: "", authorName: "妈妈" });

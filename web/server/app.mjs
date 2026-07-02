@@ -208,11 +208,21 @@ function pushPayloadForEvent(event) {
   if (event.type === "comment-added") {
     return {
       title: "miemie 有新回复",
-      body: `${event.comment.authorName}：${event.comment.body}`,
+      body: commentNotificationBody(event.comment),
       url: "/"
     };
   }
   return null;
+}
+
+function commentNotificationBody(comment) {
+  if (comment.body) {
+    return `${comment.authorName}：${comment.body}`;
+  }
+  if (comment.imageUrl) {
+    return `${comment.authorName} 发来一张照片`;
+  }
+  return `${comment.authorName} 回复了`;
 }
 
 function openEventStream(response, events) {
