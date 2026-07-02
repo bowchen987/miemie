@@ -634,13 +634,13 @@ function renderPost(post) {
     image.removeAttribute("src");
   }
 
-  attachPostActionMenu(card, post);
-
   if (post.kind === "message") {
     const commentsSection = renderComments(post);
     card.append(commentsSection);
     collapseMessageReplyControls(card, commentsSection);
   }
+
+  attachPostActionMenu(card, post);
 
   return fragment;
 }
@@ -668,12 +668,15 @@ function renderPostTags(post) {
 }
 
 function attachPostActionMenu(card, post) {
+  wrapPostCardContent(card);
+
   const actions = document.createElement("div");
   actions.className = "post-actions";
   actions.hidden = true;
 
   const editButton = document.createElement("button");
   editButton.type = "button";
+  editButton.className = "edit-action";
   editButton.textContent = "✎";
   editButton.title = "编辑";
   editButton.setAttribute("aria-label", "编辑");
@@ -684,6 +687,7 @@ function attachPostActionMenu(card, post) {
 
   const pinButton = document.createElement("button");
   pinButton.type = "button";
+  pinButton.className = "pin-action";
   pinButton.textContent = "📌";
   pinButton.title = post.pinnedAt ? "取消置顶" : "置顶";
   pinButton.setAttribute("aria-label", post.pinnedAt ? "取消置顶" : "置顶");
@@ -755,6 +759,19 @@ function attachPostActionMenu(card, post) {
   card.addEventListener("pointerleave", () => {
     trackingSwipe = false;
   });
+}
+
+function wrapPostCardContent(card) {
+  if (card.firstElementChild?.classList.contains("post-card-content")) {
+    return;
+  }
+
+  const content = document.createElement("div");
+  content.className = "post-card-content";
+  while (card.firstChild) {
+    content.append(card.firstChild);
+  }
+  card.append(content);
 }
 
 function showPostActionMenu(card) {

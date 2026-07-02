@@ -591,10 +591,20 @@ h1 {
 }
 
 .post-card {
+  --post-action-offset: -142px;
   position: relative;
   overflow: hidden;
   padding: 14px;
   touch-action: pan-y;
+}
+
+.post-card-content {
+  transition: transform 160ms ease;
+  will-change: transform;
+}
+
+.post-card.action-menu-open .post-card-content {
+  transform: translateX(var(--post-action-offset));
 }
 
 .post-card.is-pinned {
@@ -616,11 +626,11 @@ h1 {
 .post-actions {
   position: absolute;
   top: 50%;
-  right: 10px;
+  right: 8px;
   z-index: 2;
   display: flex;
-  gap: 6px;
-  padding: 5px;
+  gap: 7px;
+  padding: 6px;
   border: 1px solid var(--line);
   border-radius: 999px;
   background: rgba(255, 254, 248, 0.96);
@@ -639,19 +649,26 @@ h1 {
 .post-actions button {
   display: grid;
   place-items: center;
-  width: 36px;
-  height: 36px;
+  width: 44px;
+  height: 44px;
   padding: 0;
   border-radius: 999px;
-  background: var(--mint);
   color: var(--ink);
-  font-size: 17px;
+  font-size: 22px;
   font-weight: 900;
   line-height: 1;
 }
 
+.post-actions .edit-action {
+  background: rgba(204, 232, 245, 0.9);
+}
+
+.post-actions .pin-action {
+  background: rgba(255, 241, 180, 0.92);
+}
+
 .post-actions .delete-action {
-  background: rgba(255, 181, 166, 0.74);
+  background: rgba(255, 181, 166, 0.86);
 }
 
 @keyframes action-pop {

@@ -26,7 +26,31 @@ test("post actions are revealed by swiping left and use icon buttons", async () 
   assert.match(styles, /\.post-actions\[hidden\]\s*\{[^}]*display:\s*none/s);
   assert.match(styles, /\.post-card\.action-menu-open \.post-actions/);
   assert.match(styles, /touch-action:\s*pan-y/);
-  assert.match(styles, /\.post-actions button\s*\{[^}]*width:\s*36px/s);
+  assert.match(styles, /\.post-actions button\s*\{[^}]*width:\s*44px/s);
+});
+
+test("post content slides aside while action buttons stay revealed", async () => {
+  const app = await readFile(new URL("../public/app.js", import.meta.url), "utf8");
+  const styles = await readFile(new URL("../public/styles.css", import.meta.url), "utf8");
+
+  assert.match(app, /function wrapPostCardContent\(card\)/);
+  assert.match(app, /content\.className = "post-card-content"/);
+  assert.match(app, /wrapPostCardContent\(card\);\s*const actions = document\.createElement\("div"\)/);
+  assert.match(styles, /\.post-card-content\s*\{[^}]*transition:\s*transform 160ms ease/s);
+  assert.match(styles, /\.post-card\.action-menu-open \.post-card-content\s*\{[^}]*transform:\s*translateX\(var\(--post-action-offset\)\)/s);
+});
+
+test("post action buttons use larger icons with distinct colors", async () => {
+  const app = await readFile(new URL("../public/app.js", import.meta.url), "utf8");
+  const styles = await readFile(new URL("../public/styles.css", import.meta.url), "utf8");
+
+  assert.match(app, /editButton\.className = "edit-action"/);
+  assert.match(app, /pinButton\.className = "pin-action"/);
+  assert.match(app, /deleteButton\.className = "delete-action"/);
+  assert.match(styles, /\.post-actions button\s*\{[^}]*width:\s*44px[\s\S]*height:\s*44px[\s\S]*font-size:\s*22px/s);
+  assert.match(styles, /\.post-actions \.edit-action\s*\{[^}]*background:/s);
+  assert.match(styles, /\.post-actions \.pin-action\s*\{[^}]*background:/s);
+  assert.match(styles, /\.post-actions \.delete-action\s*\{[^}]*background:/s);
 });
 
 test("post action menu closes from a right swipe", async () => {
