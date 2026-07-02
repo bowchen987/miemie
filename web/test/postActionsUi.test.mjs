@@ -16,7 +16,7 @@ test("post actions are revealed by swiping left and use icon buttons", async () 
   assert.match(app, /function togglePinPost\(post\)/);
   assert.match(app, /function editPost\(post\)/);
   assert.match(app, /async function deletePost\(post\)/);
-  assert.match(app, /editButton\.textContent = "✎"/);
+  assert.match(app, /editButton\.textContent = "✏️"/);
   assert.match(app, /pinButton\.textContent = "📌"/);
   assert.match(app, /deleteButton\.textContent = "🗑"/);
   assert.match(app, /editButton\.setAttribute\("aria-label", "编辑"\)/);
@@ -26,7 +26,7 @@ test("post actions are revealed by swiping left and use icon buttons", async () 
   assert.match(styles, /\.post-actions\[hidden\]\s*\{[^}]*display:\s*none/s);
   assert.match(styles, /\.post-card\.action-menu-open \.post-actions/);
   assert.match(styles, /touch-action:\s*pan-y/);
-  assert.match(styles, /\.post-actions button\s*\{[^}]*width:\s*44px/s);
+  assert.match(styles, /\.post-actions button\s*\{[^}]*width:\s*52px/s);
 });
 
 test("post content slides aside while action buttons stay revealed", async () => {
@@ -47,8 +47,8 @@ test("post action buttons use larger icons with distinct colors", async () => {
   assert.match(app, /editButton\.className = "edit-action"/);
   assert.match(app, /pinButton\.className = "pin-action"/);
   assert.match(app, /deleteButton\.className = "delete-action"/);
-  assert.match(styles, /\.post-actions button\s*\{[^}]*width:\s*44px[\s\S]*height:\s*44px[\s\S]*font-size:\s*22px/s);
-  assert.match(styles, /\.post-actions \.edit-action\s*\{[^}]*background:/s);
+  assert.match(styles, /\.post-actions button\s*\{[^}]*width:\s*52px[\s\S]*height:\s*52px[\s\S]*font-size:\s*26px/s);
+  assert.match(styles, /\.post-actions \.edit-action\s*\{[^}]*background:[\s\S]*font-size:\s*26px/s);
   assert.match(styles, /\.post-actions \.pin-action\s*\{[^}]*background:/s);
   assert.match(styles, /\.post-actions \.delete-action\s*\{[^}]*background:/s);
 });

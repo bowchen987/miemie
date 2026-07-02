@@ -677,7 +677,7 @@ function attachPostActionMenu(card, post) {
   const editButton = document.createElement("button");
   editButton.type = "button";
   editButton.className = "edit-action";
-  editButton.textContent = "✎";
+  editButton.textContent = "✏️";
   editButton.title = "编辑";
   editButton.setAttribute("aria-label", "编辑");
   editButton.addEventListener("click", (event) => {
