@@ -29,12 +29,21 @@ test("post actions are revealed by swiping left and use icon buttons", async () 
   assert.match(styles, /\.post-actions button\s*\{[^}]*width:\s*36px/s);
 });
 
-test("post action menu closes from a card click or a right swipe", async () => {
+test("post action menu closes from a right swipe", async () => {
   const app = await readFile(new URL("../public/app.js", import.meta.url), "utf8");
 
-  assert.match(app, /card\.classList\.contains\("action-menu-open"\)/);
-  assert.match(app, /hidePostActionMenu\(card\);\s*event\.preventDefault\(\);\s*event\.stopImmediatePropagation\(\);/s);
   assert.match(app, /deltaX <= -POST_ACTION_SWIPE_THRESHOLD[\s\S]*hidePostActionMenu\(card\)/);
+});
+
+test("post action menu eats any non-action click after it is open", async () => {
+  const app = await readFile(new URL("../public/app.js", import.meta.url), "utf8");
+
+  assert.match(app, /document\.addEventListener\("click", closePostActionMenuFromAnyClick, true\)/);
+  assert.match(app, /function closePostActionMenuFromAnyClick\(event\)/);
+  assert.match(app, /if \(isPostActionControlTarget\(event\.target\)\)[\s\S]*return;/);
+  assert.match(app, /if \(Date\.now\(\) < postActionClickSuppressUntil\)[\s\S]*event\.preventDefault\(\);[\s\S]*event\.stopImmediatePropagation\(\);/);
+  assert.match(app, /hideActivePostActionMenu\(\);[\s\S]*event\.preventDefault\(\);[\s\S]*event\.stopImmediatePropagation\(\);/);
+  assert.doesNotMatch(app, /suppressNextClick/);
 });
 
 test("pinned posts render with a red pin marker", async () => {

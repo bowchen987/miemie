@@ -65,6 +65,7 @@ const COMMENT_EMOJIS = ["❤️", "👍", "😂", "🥰", "👏", "🙏"];
 const COMMENT_PHOTO_PICKER_RETURN_WINDOW_MS = 10 * 60 * 1000;
 const COMMENT_PHOTO_PICKER_SETTLE_MS = 1500;
 const NEW_BADGE_VISIBLE_MS = 1400;
+const POST_ACTION_CLICK_SUPPRESS_MS = 320;
 const POST_ACTION_SWIPE_THRESHOLD = 44;
 const POST_READ_STATE_KEY = "miemie.postReadState";
 const UPLOAD_IMAGE_MAX_EDGE = 1600;
@@ -97,6 +98,7 @@ let commentPhotoPickerOpenedAt = 0;
 let commentPhotoPickerClearTimer;
 let postReadState = loadPostReadState();
 let activePostActionCard = null;
+let postActionClickSuppressUntil = 0;
 const commentPhotoRefreshers = new Set();
 
 const elements = {
@@ -184,7 +186,7 @@ function bindEvents() {
   elements.saveFamilyCodeButton.addEventListener("click", saveFamilyCode);
   elements.shareLocationButton.addEventListener("click", shareLocation);
   elements.enableNotifyButton.addEventListener("click", requestNotificationPermission);
-  document.addEventListener("click", closePostActionMenuFromOutside);
+  document.addEventListener("click", closePostActionMenuFromAnyClick, true);
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape") {
       hideActivePostActionMenu();
@@ -708,21 +710,6 @@ function attachPostActionMenu(card, post) {
   let startY = 0;
   let trackingSwipe = false;
 
-  card.addEventListener("click", (event) => {
-    if (card.dataset.suppressNextClick === "true") {
-      event.preventDefault();
-      event.stopImmediatePropagation();
-      delete card.dataset.suppressNextClick;
-      return;
-    }
-
-    if (card.classList.contains("action-menu-open") && !isPostActionTarget(event.target)) {
-      hidePostActionMenu(card);
-      event.preventDefault();
-      event.stopImmediatePropagation();
-    }
-  }, true);
-
   card.addEventListener("pointerdown", (event) => {
     if (isPostActionTarget(event.target) || event.button !== 0) {
       return;
@@ -746,15 +733,15 @@ function attachPostActionMenu(card, post) {
 
     if (startX - event.clientX >= POST_ACTION_SWIPE_THRESHOLD) {
       event.preventDefault();
+      suppressPostActionSwipeClick();
       showPostActionMenu(card);
-      card.dataset.suppressNextClick = "true";
       trackingSwipe = false;
       return;
     }
 
     if (deltaX <= -POST_ACTION_SWIPE_THRESHOLD) {
+      suppressPostActionSwipeClick();
       hidePostActionMenu(card);
-      card.dataset.suppressNextClick = "true";
       trackingSwipe = false;
     }
   });
@@ -794,13 +781,36 @@ function hideActivePostActionMenu() {
   }
 }
 
-function closePostActionMenuFromOutside(event) {
-  if (!activePostActionCard || !(event.target instanceof Element)) {
+function suppressPostActionSwipeClick() {
+  postActionClickSuppressUntil = Date.now() + POST_ACTION_CLICK_SUPPRESS_MS;
+}
+
+function closePostActionMenuFromAnyClick(event) {
+  if (!(event.target instanceof Element)) {
     return;
   }
-  if (!activePostActionCard.contains(event.target)) {
-    hideActivePostActionMenu();
+
+  if (isPostActionControlTarget(event.target)) {
+    return;
   }
+
+  if (Date.now() < postActionClickSuppressUntil) {
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    return;
+  }
+
+  if (!activePostActionCard) {
+    return;
+  }
+
+  hideActivePostActionMenu();
+  event.preventDefault();
+  event.stopImmediatePropagation();
+}
+
+function isPostActionControlTarget(target) {
+  return target instanceof Element && Boolean(target.closest(".post-actions"));
 }
 
 function isPostActionTarget(target) {
