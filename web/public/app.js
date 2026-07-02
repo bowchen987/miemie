@@ -649,15 +649,13 @@ function collapseMessageReplyControls(card, commentsSection) {
 
   card.classList.add("message-card");
   card.setAttribute("tabindex", "0");
-  card.setAttribute("aria-expanded", "false");
-  commentsSection.classList.add("reply-collapsed");
-  form.setAttribute("aria-hidden", "true");
+  hideMessageReplyControls(card, commentsSection);
 
   card.addEventListener("click", (event) => {
     if (isMessageReplyControlTarget(event.target)) {
       return;
     }
-    expandMessageReplyControls(card, commentsSection);
+    toggleMessageReplyControls(card, commentsSection);
   });
 
   card.addEventListener("keydown", (event) => {
@@ -668,8 +666,28 @@ function collapseMessageReplyControls(card, commentsSection) {
       return;
     }
     event.preventDefault();
-    expandMessageReplyControls(card, commentsSection);
+    toggleMessageReplyControls(card, commentsSection);
   });
+}
+
+function toggleMessageReplyControls(card, commentsSection) {
+  if (commentsSection.classList.contains("reply-collapsed")) {
+    expandMessageReplyControls(card, commentsSection);
+    return;
+  }
+
+  hideMessageReplyControls(card, commentsSection);
+}
+
+function hideMessageReplyControls(card, commentsSection) {
+  const form = commentsSection.querySelector(".comment-form");
+  if (!form) {
+    return;
+  }
+
+  commentsSection.classList.add("reply-collapsed");
+  form.setAttribute("aria-hidden", "true");
+  card.setAttribute("aria-expanded", "false");
 }
 
 function expandMessageReplyControls(card, commentsSection) {

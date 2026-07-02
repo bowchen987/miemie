@@ -575,10 +575,6 @@ h1 {
   cursor: pointer;
 }
 
-.message-card[aria-expanded="true"] {
-  cursor: default;
-}
-
 .comments-section {
   display: grid;
   gap: 9px;

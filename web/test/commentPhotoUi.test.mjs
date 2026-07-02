@@ -74,3 +74,14 @@ test("message reply controls stay collapsed until the message card is opened", a
   assert.match(styles, /\.comments-section\.reply-collapsed \.comment-form\s*\{[^}]*display:\s*none/s);
   assert.match(styles, /\.comments-section\.reply-collapsed:not\(\.has-comments\)\s*\{[^}]*display:\s*none/s);
 });
+
+test("message reply controls toggle closed after being opened", async () => {
+  const app = await readFile(new URL("../public/app.js", import.meta.url), "utf8");
+  const styles = await readFile(new URL("../public/styles.css", import.meta.url), "utf8");
+
+  assert.match(app, /function toggleMessageReplyControls\(card, commentsSection\)/);
+  assert.match(app, /commentsSection\.classList\.contains\("reply-collapsed"\)/);
+  assert.match(app, /hideMessageReplyControls\(card, commentsSection\)/);
+  assert.match(app, /card\.setAttribute\("aria-expanded", "false"\)/);
+  assert.doesNotMatch(styles, /\.message-card\[aria-expanded="true"\]\s*\{[^}]*cursor:\s*default/s);
+});
