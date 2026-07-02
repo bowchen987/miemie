@@ -2,22 +2,31 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-test("post pin, edit, and delete actions are hidden until a long press opens them", async () => {
+test("post actions are revealed by swiping left and use icon buttons", async () => {
   const app = await readFile(new URL("../public/app.js", import.meta.url), "utf8");
   const styles = await readFile(new URL("../public/styles.css", import.meta.url), "utf8");
 
-  assert.match(app, /const POST_ACTION_LONG_PRESS_MS\s*=/);
+  assert.match(app, /const POST_ACTION_SWIPE_THRESHOLD\s*=/);
   assert.match(app, /function attachPostActionMenu\(card, post\)/);
   assert.match(app, /card\.addEventListener\("pointerdown"/);
+  assert.match(app, /card\.addEventListener\("pointermove"/);
   assert.match(app, /card\.addEventListener\("pointerup"/);
   assert.match(app, /function showPostActionMenu\(card\)/);
   assert.match(app, /function hidePostActionMenu\(card\)/);
   assert.match(app, /function togglePinPost\(post\)/);
   assert.match(app, /function editPost\(post\)/);
   assert.match(app, /async function deletePost\(post\)/);
-  assert.match(app, /pinButton\.textContent = post\.pinnedAt \? "取消置顶" : "置顶"/);
+  assert.match(app, /editButton\.textContent = "✎"/);
+  assert.match(app, /pinButton\.textContent = "📌"/);
+  assert.match(app, /deleteButton\.textContent = "🗑"/);
+  assert.match(app, /editButton\.setAttribute\("aria-label", "编辑"\)/);
+  assert.match(app, /pinButton\.setAttribute\("aria-label", post\.pinnedAt \? "取消置顶" : "置顶"\)/);
+  assert.match(app, /deleteButton\.setAttribute\("aria-label", "删除"\)/);
+  assert.match(app, /startX - event\.clientX >= POST_ACTION_SWIPE_THRESHOLD/);
   assert.match(styles, /\.post-actions\[hidden\]\s*\{[^}]*display:\s*none/s);
   assert.match(styles, /\.post-card\.action-menu-open \.post-actions/);
+  assert.match(styles, /touch-action:\s*pan-y/);
+  assert.match(styles, /\.post-actions button\s*\{[^}]*width:\s*36px/s);
 });
 
 test("pinned posts render with a red pin marker", async () => {

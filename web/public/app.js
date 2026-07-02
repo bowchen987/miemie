@@ -65,7 +65,7 @@ const COMMENT_EMOJIS = ["❤️", "👍", "😂", "🥰", "👏", "🙏"];
 const COMMENT_PHOTO_PICKER_RETURN_WINDOW_MS = 10 * 60 * 1000;
 const COMMENT_PHOTO_PICKER_SETTLE_MS = 1500;
 const NEW_BADGE_VISIBLE_MS = 1400;
-const POST_ACTION_LONG_PRESS_MS = 560;
+const POST_ACTION_SWIPE_THRESHOLD = 44;
 const POST_READ_STATE_KEY = "miemie.postReadState";
 const UPLOAD_IMAGE_MAX_EDGE = 1600;
 const UPLOAD_IMAGE_QUALITY = 0.82;
@@ -670,42 +670,43 @@ function attachPostActionMenu(card, post) {
   actions.className = "post-actions";
   actions.hidden = true;
 
-  const pinButton = document.createElement("button");
-  pinButton.type = "button";
-  pinButton.textContent = post.pinnedAt ? "取消置顶" : "置顶";
-  pinButton.addEventListener("click", (event) => {
-    event.stopPropagation();
-    togglePinPost(post);
-  });
-
   const editButton = document.createElement("button");
   editButton.type = "button";
-  editButton.textContent = "编辑";
+  editButton.textContent = "✎";
+  editButton.title = "编辑";
+  editButton.setAttribute("aria-label", "编辑");
   editButton.addEventListener("click", (event) => {
     event.stopPropagation();
     editPost(post);
   });
 
+  const pinButton = document.createElement("button");
+  pinButton.type = "button";
+  pinButton.textContent = "📌";
+  pinButton.title = post.pinnedAt ? "取消置顶" : "置顶";
+  pinButton.setAttribute("aria-label", post.pinnedAt ? "取消置顶" : "置顶");
+  pinButton.addEventListener("click", (event) => {
+    event.stopPropagation();
+    togglePinPost(post);
+  });
+
   const deleteButton = document.createElement("button");
   deleteButton.type = "button";
   deleteButton.className = "delete-action";
-  deleteButton.textContent = "删除";
+  deleteButton.textContent = "🗑";
+  deleteButton.title = "删除";
+  deleteButton.setAttribute("aria-label", "删除");
   deleteButton.addEventListener("click", (event) => {
     event.stopPropagation();
     deletePost(post);
   });
 
-  actions.append(pinButton, editButton, deleteButton);
+  actions.append(editButton, pinButton, deleteButton);
   card.append(actions);
 
-  let longPressTimer = null;
   let startX = 0;
   let startY = 0;
-
-  const clearLongPressTimer = () => {
-    window.clearTimeout(longPressTimer);
-    longPressTimer = null;
-  };
+  let trackingSwipe = false;
 
   card.addEventListener("click", (event) => {
     if (card.dataset.suppressNextClick === "true") {
@@ -722,29 +723,43 @@ function attachPostActionMenu(card, post) {
 
     startX = event.clientX;
     startY = event.clientY;
-    clearLongPressTimer();
-    longPressTimer = window.setTimeout(() => {
-      showPostActionMenu(card);
-      card.dataset.suppressNextClick = "true";
-    }, POST_ACTION_LONG_PRESS_MS);
+    trackingSwipe = true;
   });
 
   card.addEventListener("pointermove", (event) => {
-    if (Math.hypot(event.clientX - startX, event.clientY - startY) > 10) {
-      clearLongPressTimer();
+    if (!trackingSwipe) {
+      return;
+    }
+
+    const deltaX = startX - event.clientX;
+    const deltaY = Math.abs(event.clientY - startY);
+    if (Math.abs(deltaX) <= deltaY) {
+      return;
+    }
+
+    if (startX - event.clientX >= POST_ACTION_SWIPE_THRESHOLD) {
+      event.preventDefault();
+      showPostActionMenu(card);
+      card.dataset.suppressNextClick = "true";
+      trackingSwipe = false;
+      return;
+    }
+
+    if (deltaX <= -POST_ACTION_SWIPE_THRESHOLD) {
+      hidePostActionMenu(card);
+      card.dataset.suppressNextClick = "true";
+      trackingSwipe = false;
     }
   });
 
-  card.addEventListener("pointerup", clearLongPressTimer);
-  card.addEventListener("pointercancel", clearLongPressTimer);
-  card.addEventListener("pointerleave", clearLongPressTimer);
-
-  card.addEventListener("contextmenu", (event) => {
-    if (isPostActionTarget(event.target)) {
-      return;
-    }
-    event.preventDefault();
-    showPostActionMenu(card);
+  card.addEventListener("pointerup", () => {
+    trackingSwipe = false;
+  });
+  card.addEventListener("pointercancel", () => {
+    trackingSwipe = false;
+  });
+  card.addEventListener("pointerleave", () => {
+    trackingSwipe = false;
   });
 }
 
