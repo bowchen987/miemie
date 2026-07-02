@@ -134,6 +134,73 @@ test("toggles todos through the HTTP API", async () => {
   });
 });
 
+test("toggles pinned posts through the HTTP API and notifies other members", async () => {
+  const sent = [];
+
+  await withHttpServer(async (baseUrl) => {
+    for (const memberId of ["mama", "baba"]) {
+      const response = await fetch(`${baseUrl}/api/push/subscriptions`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          memberId,
+          displayName: memberId === "mama" ? "妈妈" : "爸爸",
+          subscription: { endpoint: `https://push.example/${memberId}`, keys: { p256dh: "key", auth: "auth" } }
+        })
+      });
+      assert.equal(response.status, 201);
+    }
+
+    const createResponse = await fetch(`${baseUrl}/api/posts`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        kind: "message",
+        title: "今晚吃面",
+        body: "",
+        authorName: "妈妈",
+        authorMemberId: "mama"
+      })
+    });
+    const created = await createResponse.json();
+
+    const pinResponse = await fetch(`${baseUrl}/api/posts/${created.post.id}/pin`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ actorMemberId: "mama" })
+    });
+    assert.equal(pinResponse.status, 200);
+    const pinned = await pinResponse.json();
+    assert.equal(pinned.post.pinnedAt, pinned.post.activityAt);
+    assert.equal(pinned.event.type, "post-pinned");
+
+    const unpinResponse = await fetch(`${baseUrl}/api/posts/${created.post.id}/pin`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ actorMemberId: "mama" })
+    });
+    assert.equal(unpinResponse.status, 200);
+    const unpinned = await unpinResponse.json();
+    assert.equal(unpinned.post.pinnedAt, null);
+    assert.equal(unpinned.event.type, "post-unpinned");
+  }, {
+    pushNotifier: {
+      publicKey: "test-public-key",
+      sendNotification: async (subscription, payload) => {
+        sent.push({ subscription, payload });
+      }
+    }
+  });
+
+  assert.equal(sent.length, 3);
+  assert.equal(sent[1].subscription.endpoint, "https://push.example/baba");
+  assert.equal(sent[1].payload.title, "miemie 留言已置顶");
+  assert.equal(sent[1].payload.body, "今晚吃面");
+  assert.equal(sent[2].subscription.endpoint, "https://push.example/baba");
+  assert.equal(sent[2].payload.title, "miemie 留言已取消置顶");
+  assert.equal(sent[2].payload.body, "今晚吃面");
+});
+
 test("updates and deletes posts through the HTTP API and notifies other members", async () => {
   const sent = [];
 

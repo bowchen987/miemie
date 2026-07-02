@@ -485,6 +485,22 @@ h1 {
   padding: 14px;
 }
 
+.post-card.is-pinned {
+  padding-top: 18px;
+}
+
+.post-card.is-pinned::after {
+  content: "📌";
+  position: absolute;
+  top: -9px;
+  left: 8px;
+  z-index: 3;
+  color: #f25f5c;
+  font-size: 23px;
+  filter: drop-shadow(0 5px 8px rgba(242, 95, 92, 0.22));
+  transform: rotate(-15deg);
+}
+
 .post-actions {
   position: absolute;
   top: 10px;
@@ -509,7 +525,7 @@ h1 {
 
 .post-actions button {
   min-height: 30px;
-  padding: 0 10px;
+  padding: 0 9px;
   border-radius: 999px;
   background: var(--mint);
   color: var(--ink);

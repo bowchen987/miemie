@@ -403,6 +403,7 @@ function renderPost(post) {
   const title = fragment.querySelector("h3");
 
   card.classList.toggle("completed", post.todoStatus === "completed");
+  card.classList.toggle("is-pinned", Boolean(post.pinnedAt));
   fragment.querySelector(".post-kind").textContent = KIND_TITLES[post.kind] || post.kind;
   fragment.querySelector(".post-author").textContent = `· ${post.authorName}`;
   fragment.querySelector(".post-time").textContent = formatTime(post.createdAt);
@@ -448,6 +449,14 @@ function attachPostActionMenu(card, post) {
   actions.className = "post-actions";
   actions.hidden = true;
 
+  const pinButton = document.createElement("button");
+  pinButton.type = "button";
+  pinButton.textContent = post.pinnedAt ? "取消置顶" : "置顶";
+  pinButton.addEventListener("click", (event) => {
+    event.stopPropagation();
+    togglePinPost(post);
+  });
+
   const editButton = document.createElement("button");
   editButton.type = "button";
   editButton.textContent = "编辑";
@@ -465,7 +474,7 @@ function attachPostActionMenu(card, post) {
     deletePost(post);
   });
 
-  actions.append(editButton, deleteButton);
+  actions.append(pinButton, editButton, deleteButton);
   card.append(actions);
 
   let longPressTimer = null;
@@ -558,6 +567,16 @@ function isPostActionTarget(target) {
 function editPost(post) {
   hideActivePostActionMenu();
   openComposer(post.kind, post);
+}
+
+async function togglePinPost(post) {
+  hideActivePostActionMenu();
+  await api(`/api/posts/${encodeURIComponent(post.id)}/pin`, {
+    method: "PATCH",
+    body: { actorMemberId: state.memberId }
+  });
+  await loadPosts();
+  await loadFilterBadges();
 }
 
 async function deletePost(post) {
@@ -1446,6 +1465,18 @@ function notificationMessage(event) {
   if (event.type === "post-deleted") {
     return {
       title: `miemie ${KIND_TITLES[event.post.kind] || "内容"}已删除`,
+      body: event.post.title
+    };
+  }
+  if (event.type === "post-pinned") {
+    return {
+      title: `miemie ${KIND_TITLES[event.post.kind] || "内容"}已置顶`,
+      body: event.post.title
+    };
+  }
+  if (event.type === "post-unpinned") {
+    return {
+      title: `miemie ${KIND_TITLES[event.post.kind] || "内容"}已取消置顶`,
       body: event.post.title
     };
   }

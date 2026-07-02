@@ -90,6 +90,13 @@ export function createServer({
         return sendJson(response, 200, result);
       }
 
+      const pinMatch = url.pathname.match(/^\/api\/posts\/([^/]+)\/pin$/);
+      if (request.method === "PATCH" && pinMatch) {
+        const result = await store.togglePostPin(decodeURIComponent(pinMatch[1]), await readJson(request));
+        await publishChange({ events, store, pushNotifier, event: result.event });
+        return sendJson(response, 200, result);
+      }
+
       const toggleMatch = url.pathname.match(/^\/api\/posts\/([^/]+)\/toggle$/);
       if (request.method === "PATCH" && toggleMatch) {
         const result = await store.toggleTodo(decodeURIComponent(toggleMatch[1]), await readJson(request));
@@ -232,6 +239,20 @@ function pushPayloadForEvent(event) {
   if (event.type === "post-deleted") {
     return {
       title: `miemie ${KIND_TITLES[event.post.kind] || "内容"}已删除`,
+      body: event.post.title,
+      url: "/"
+    };
+  }
+  if (event.type === "post-pinned") {
+    return {
+      title: `miemie ${KIND_TITLES[event.post.kind] || "内容"}已置顶`,
+      body: event.post.title,
+      url: "/"
+    };
+  }
+  if (event.type === "post-unpinned") {
+    return {
+      title: `miemie ${KIND_TITLES[event.post.kind] || "内容"}已取消置顶`,
       body: event.post.title,
       url: "/"
     };

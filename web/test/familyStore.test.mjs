@@ -87,6 +87,38 @@ test("filters all posts by requested day range while kind filters keep history",
   }
 });
 
+test("pins posts before unpinned posts only in kind feeds", async () => {
+  const dir = await mkdtemp(path.join(tmpdir(), "miemie-store-"));
+  try {
+    let currentTime = new Date("2026-07-01T08:00:00.000Z");
+    const store = new FamilyStore({ dataDir: dir, now: () => currentTime });
+    await store.ready;
+
+    const pinned = await store.createPost({ kind: "message", title: "要置顶的旧留言", body: "", authorName: "妈妈" });
+    currentTime = new Date("2026-07-01T08:01:00.000Z");
+    await store.createPost({ kind: "message", title: "普通新留言", body: "", authorName: "爸爸" });
+    currentTime = new Date("2026-07-01T08:02:00.000Z");
+
+    const pinResult = await store.togglePostPin(pinned.post.id, { actorMemberId: "mama" });
+    const allPosts = await store.listPosts({ filter: "all" });
+    const messagePosts = await store.listPosts({ filter: "message" });
+
+    assert.equal(pinResult.post.pinnedAt, "2026-07-01T08:02:00.000Z");
+    assert.equal(pinResult.event.type, "post-pinned");
+    assert.deepEqual(allPosts.map((post) => post.title), ["普通新留言", "要置顶的旧留言"]);
+    assert.deepEqual(messagePosts.map((post) => post.title), ["要置顶的旧留言", "普通新留言"]);
+
+    const unpinResult = await store.togglePostPin(pinned.post.id, { actorMemberId: "mama" });
+    const unpinnedMessages = await store.listPosts({ filter: "message" });
+
+    assert.equal(unpinResult.post.pinnedAt, null);
+    assert.equal(unpinResult.event.type, "post-unpinned");
+    assert.deepEqual(unpinnedMessages.map((post) => post.title), ["普通新留言", "要置顶的旧留言"]);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
 test("toggles todo status and records an update event", async () => {
   await withStore(async (store) => {
     const { post } = await store.createPost({ kind: "todo", title: "买牛奶", body: "", authorName: "妈妈" });

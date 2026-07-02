@@ -22,7 +22,7 @@ export class FamilyStore {
     return this.posts
       .filter((post) => this.includesFilter(post, filter))
       .filter((post) => this.includesDateRange(post, range))
-      .sort((left, right) => new Date(right.createdAt) - new Date(left.createdAt));
+      .sort((left, right) => this.comparePosts(left, right, filter));
   }
 
   async createPost(input) {
@@ -49,6 +49,7 @@ export class FamilyStore {
       activityAt: createdAt,
       activityByMemberId: authorMemberId,
       activityType: "post-added",
+      pinnedAt: null,
       hasPhoto: Boolean(input.hasPhoto),
       imageUrl: input.imageUrl ?? null,
       comments: []
@@ -117,6 +118,30 @@ export class FamilyStore {
       post,
       event: {
         ...this.event("post-updated", post),
+        actorMemberId
+      }
+    };
+  }
+
+  async togglePostPin(id, input = {}) {
+    const post = this.posts.find((item) => item.id === id);
+    if (!post) {
+      throw new Error("post not found");
+    }
+
+    const actorMemberId = this.clean(input.actorMemberId) || null;
+    const changedAt = this.now().toISOString();
+    const pinned = !post.pinnedAt;
+    post.pinnedAt = pinned ? changedAt : null;
+    post.activityAt = changedAt;
+    post.activityByMemberId = actorMemberId;
+    post.activityType = pinned ? "post-pinned" : "post-unpinned";
+    await this.save();
+
+    return {
+      post,
+      event: {
+        ...this.event(post.activityType, post),
         actorMemberId
       }
     };
@@ -260,7 +285,7 @@ export class FamilyStore {
     try {
       const raw = await readFile(this.filePath, "utf8");
       const data = JSON.parse(raw);
-      this.posts = Array.isArray(data.posts) ? data.posts.map((post) => ({ comments: [], ...post })) : [];
+      this.posts = Array.isArray(data.posts) ? data.posts.map((post) => ({ comments: [], pinnedAt: null, ...post })) : [];
       this.members = data.members && typeof data.members === "object" ? data.members : {};
       this.pushSubscriptions = Array.isArray(data.pushSubscriptions) ? data.pushSubscriptions : [];
     } catch (error) {
@@ -306,6 +331,14 @@ export class FamilyStore {
       return post.kind === "resource" || post.kind === "photo";
     }
     return post.kind === filter;
+  }
+
+  comparePosts(left, right, filter) {
+    if (filter !== "all" && Boolean(left.pinnedAt) !== Boolean(right.pinnedAt)) {
+      return left.pinnedAt ? -1 : 1;
+    }
+
+    return new Date(right.createdAt) - new Date(left.createdAt);
   }
 
   dateRange({ from, to }) {
