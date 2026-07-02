@@ -188,6 +188,15 @@ h1 {
   line-height: 1;
 }
 
+.sync-detail {
+  margin-top: 4px;
+  font-size: 12px;
+}
+
+.sync-detail[hidden] {
+  display: none;
+}
+
 .route-sticker {
   position: relative;
   width: 94px;

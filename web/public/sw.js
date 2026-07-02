@@ -1,4 +1,4 @@
-const CACHE_NAME = "miemie-pwa-v14";
+const CACHE_NAME = "miemie-pwa-v16";
 const ASSETS = [
   "/",
   "/index.html",

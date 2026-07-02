@@ -14,6 +14,50 @@ const FILTER_TITLES = {
   message: "全部留言"
 };
 
+const EMOTIONAL_STATUS_COPY = {
+  empty: [
+    "打开定位后，小家距离会亮起来",
+    "同步一次位置，就能看见彼此距离",
+    "小家还在等第一次定位",
+    "点同步位置，把小家点亮"
+  ],
+  single: [
+    "{name}刚来过 miemie，等待另一位",
+    "已经收到一个人的位置啦",
+    "小家亮了一半，等另一位也来一下",
+    "再同步一位，就能看到距离了"
+  ],
+  close: [
+    "今天也在彼此附近",
+    "离得很近，小家很安心",
+    "你们刚好在彼此身边",
+    "小家距离很近，今天也稳稳的"
+  ],
+  fresh: [
+    "刚刚同步过位置",
+    "小家刚刚亮了一下",
+    "刚刚来过 miemie",
+    "位置是新鲜的，安心"
+  ],
+  far: [
+    "距离有点远，但小家在线",
+    "人在远处，心在小家",
+    "虽然隔着一段路，小家还连着",
+    "远一点也没关系，miemie 在这里"
+  ],
+  stale: [
+    "{name} {time}来过 miemie",
+    "{name}刚才来过，小家还记得",
+    "{name}有一会儿没同步了，点一下刷新位置吧",
+    "等{name}一次新的同步，小家会更安心"
+  ],
+  fallback: [
+    "小家正在等一次新的同步",
+    "点一下同步，让小家更新一下",
+    "miemie 正在等新的位置信息"
+  ]
+};
+
 const COMMENT_EMOJIS = ["❤️", "👍", "😂", "🥰", "👏", "🙏"];
 const COMMENT_PHOTO_PICKER_RETURN_WINDOW_MS = 10 * 60 * 1000;
 const COMMENT_PHOTO_PICKER_SETTLE_MS = 1500;
@@ -60,7 +104,8 @@ const elements = {
   saveNameButton: document.querySelector("#saveNameButton"),
   saveFamilyCodeButton: document.querySelector("#saveFamilyCodeButton"),
   shareLocationButton: document.querySelector("#shareLocationButton"),
-  statusText: document.querySelector("#statusText")
+  statusText: document.querySelector("#statusText"),
+  syncDetailText: document.querySelector("#syncDetailText")
 };
 
 init();
@@ -846,20 +891,94 @@ function locationErrorText(error) {
 async function loadStatus() {
   const status = await api("/api/status");
   elements.distanceText.textContent = formatDistance(status.distanceMeters);
-  elements.statusText.textContent = statusText(status);
+  elements.statusText.textContent = emotionalStatusText(status);
+  elements.syncDetailText.textContent = syncDetailText(status);
+  elements.syncDetailText.hidden = !elements.syncDetailText.textContent;
 }
 
-function statusText(status) {
-  if (status.members.length === 0) {
-    return "点击同步位置，把当前位置发给对方";
+function emotionalStatusText(status) {
+  const members = locationMembers(status);
+  const todayKey = new Date().toISOString().slice(0, 10);
+  if (members.length === 0) {
+    return pickStatusCopy("empty", todayKey);
   }
-  if (status.members.length === 1) {
-    return `${status.members[0].displayName} 已同步，等待另一位`;
+  if (members.length === 1) {
+    return formatStatusCopy(pickStatusCopy("single", `${todayKey}:${members[0].id}`), {
+      name: members[0].displayName
+    });
   }
 
-  return status.members
+  const otherMember = members.find((member) => member.id !== state.memberId) || oldestLocationMember(members);
+  const otherAgeSeconds = locationAgeSeconds(otherMember);
+  const newestAgeSeconds = Math.min(...members.map(locationAgeSeconds));
+  const allRecentlySynced = members.every((member) => locationAgeSeconds(member) < 30 * 60);
+  const statusKey = statusCopyKey(status, members, todayKey);
+
+  if (status.distanceMeters != null && status.distanceMeters < 1000 && allRecentlySynced) {
+    return pickStatusCopy("close", statusKey);
+  }
+  if (members.every((member) => locationAgeSeconds(member) < 2 * 60)) {
+    return pickStatusCopy("fresh", statusKey);
+  }
+  if (allRecentlySynced && status.distanceMeters != null && status.distanceMeters >= 10000) {
+    return pickStatusCopy("far", statusKey);
+  }
+  if (otherAgeSeconds >= 5 * 60) {
+    return formatStatusCopy(pickStatusCopy("stale", `${statusKey}:${otherMember.id}`), {
+      name: otherMember.displayName || "对方",
+      time: formatRelativeTime(otherMember.updatedAt)
+    });
+  }
+  if (newestAgeSeconds < 5 * 60) {
+    return pickStatusCopy("fresh", statusKey);
+  }
+
+  return pickStatusCopy("fallback", statusKey);
+}
+
+function syncDetailText(status) {
+  const members = locationMembers(status);
+  if (members.length === 0) {
+    return "";
+  }
+  return members
     .map((member) => `${member.displayName} ${formatRelativeTime(member.updatedAt)}`)
     .join(" · ");
+}
+
+function locationMembers(status) {
+  return status.members.filter((member) => member.updatedAt);
+}
+
+function oldestLocationMember(members) {
+  return [...members].sort((left, right) => new Date(left.updatedAt) - new Date(right.updatedAt))[0];
+}
+
+function locationAgeSeconds(member) {
+  return Math.max(0, Math.round((Date.now() - new Date(member.updatedAt).getTime()) / 1000));
+}
+
+function statusCopyKey(status, members, todayKey) {
+  const distanceKey = status.distanceMeters == null ? "waiting" : Math.round(status.distanceMeters / 1000);
+  const memberKey = members.map((member) => member.id || member.displayName).join("|");
+  return `${todayKey}:${distanceKey}:${memberKey}`;
+}
+
+function pickStatusCopy(group, key) {
+  const copy = EMOTIONAL_STATUS_COPY[group] || EMOTIONAL_STATUS_COPY.fallback;
+  return copy[stableStatusCopyIndex(`${group}:${key}`, copy.length)];
+}
+
+function stableStatusCopyIndex(key, count) {
+  let hash = 0;
+  for (const char of key) {
+    hash = (hash * 31 + char.charCodeAt(0)) % count;
+  }
+  return hash;
+}
+
+function formatStatusCopy(template, values) {
+  return Object.entries(values).reduce((text, [key, value]) => text.replace(`{${key}}`, value), template);
 }
 
 function connectEvents() {
