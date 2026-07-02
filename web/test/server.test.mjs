@@ -9,7 +9,7 @@ import { FamilyStore } from "../server/familyStore.mjs";
 
 async function withHttpServer(run, options = {}) {
   const dir = await mkdtemp(path.join(tmpdir(), "miemie-http-"));
-  const store = new FamilyStore({ dataDir: dir });
+  const store = new FamilyStore({ dataDir: dir, now: options.now });
   await store.ready;
   const server = createServer({
     store,
@@ -54,6 +54,42 @@ test("creates and lists posts through the HTTP API", async () => {
     assert.equal(list.posts.length, 1);
     assert.equal(list.posts[0].kind, "message");
   });
+});
+
+test("lists today's paper by requested day range through the HTTP API", async () => {
+  let currentTime = new Date("2026-07-01T15:30:00.000Z");
+  await withHttpServer(async (baseUrl) => {
+    await fetch(`${baseUrl}/api/posts`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        kind: "message",
+        title: "昨天的留言",
+        body: "",
+        authorName: "妈妈"
+      })
+    });
+
+    currentTime = new Date("2026-07-02T02:00:00.000Z");
+    await fetch(`${baseUrl}/api/posts`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        kind: "todo",
+        title: "今天的待办",
+        body: "",
+        authorName: "爸爸"
+      })
+    });
+
+    const today = await fetch(
+      `${baseUrl}/api/posts?filter=all&from=2026-07-02T00%3A00%3A00.000Z&to=2026-07-03T00%3A00%3A00.000Z`
+    );
+    const messages = await fetch(`${baseUrl}/api/posts?filter=message`);
+
+    assert.deepEqual((await today.json()).posts.map((post) => post.title), ["今天的待办"]);
+    assert.deepEqual((await messages.json()).posts.map((post) => post.title), ["昨天的留言"]);
+  }, { now: () => currentTime });
 });
 
 test("protects API routes when a family code is configured", async () => {

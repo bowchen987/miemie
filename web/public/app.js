@@ -233,9 +233,26 @@ function loadImage(dataUrl) {
 }
 
 async function loadPosts() {
-  const result = await api(`/api/posts?filter=${encodeURIComponent(state.filter)}`);
+  const params = new URLSearchParams({ filter: state.filter });
+  if (state.filter === "all") {
+    for (const [key, value] of todayRangeParams()) {
+      params.set(key, value);
+    }
+  }
+
+  const result = await api(`/api/posts?${params}`);
   state.posts = result.posts;
   renderPosts();
+}
+
+function todayRangeParams() {
+  const now = new Date();
+  const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const end = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+  return [
+    ["from", start.toISOString()],
+    ["to", end.toISOString()]
+  ];
 }
 
 async function refreshAll() {

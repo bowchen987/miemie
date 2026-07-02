@@ -16,10 +16,12 @@ export class FamilyStore {
     this.ready = this.load();
   }
 
-  async listPosts({ filter = "all" } = {}) {
+  async listPosts({ filter = "all", from = "", to = "" } = {}) {
     this.assertFilter(filter);
+    const range = this.dateRange({ from, to });
     return this.posts
       .filter((post) => this.includesFilter(post, filter))
+      .filter((post) => this.includesDateRange(post, range))
       .sort((left, right) => new Date(right.createdAt) - new Date(left.createdAt));
   }
 
@@ -239,6 +241,29 @@ export class FamilyStore {
       return post.kind === "resource" || post.kind === "photo";
     }
     return post.kind === filter;
+  }
+
+  dateRange({ from, to }) {
+    if (!from && !to) {
+      return null;
+    }
+
+    const start = from ? new Date(from) : null;
+    const end = to ? new Date(to) : null;
+    if ((start && Number.isNaN(start.getTime())) || (end && Number.isNaN(end.getTime()))) {
+      throw new Error("invalid date range");
+    }
+
+    return { start, end };
+  }
+
+  includesDateRange(post, range) {
+    if (!range) {
+      return true;
+    }
+
+    const createdAt = new Date(post.createdAt);
+    return (!range.start || createdAt >= range.start) && (!range.end || createdAt < range.end);
   }
 
   event(type, post) {

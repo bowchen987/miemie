@@ -46,7 +46,11 @@ export function createServer({
       }
 
       if (request.method === "GET" && url.pathname === "/api/posts") {
-        const posts = await store.listPosts({ filter: url.searchParams.get("filter") ?? "all" });
+        const posts = await store.listPosts({
+          filter: url.searchParams.get("filter") ?? "all",
+          from: url.searchParams.get("from") ?? "",
+          to: url.searchParams.get("to") ?? ""
+        });
         return sendJson(response, 200, { posts });
       }
 

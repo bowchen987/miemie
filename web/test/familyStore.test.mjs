@@ -60,6 +60,31 @@ test("filters resources and photos together", async () => {
   });
 });
 
+test("filters all posts by requested day range while kind filters keep history", async () => {
+  const dir = await mkdtemp(path.join(tmpdir(), "miemie-store-"));
+  try {
+    let currentTime = new Date("2026-07-01T15:30:00.000Z");
+    const store = new FamilyStore({ dataDir: dir, now: () => currentTime });
+    await store.ready;
+
+    await store.createPost({ kind: "message", title: "昨天的留言", body: "", authorName: "妈妈" });
+    currentTime = new Date("2026-07-02T02:00:00.000Z");
+    await store.createPost({ kind: "todo", title: "今天的待办", body: "", authorName: "爸爸" });
+
+    const today = await store.listPosts({
+      filter: "all",
+      from: "2026-07-02T00:00:00.000Z",
+      to: "2026-07-03T00:00:00.000Z"
+    });
+    const messages = await store.listPosts({ filter: "message" });
+
+    assert.deepEqual(today.map((post) => post.title), ["今天的待办"]);
+    assert.deepEqual(messages.map((post) => post.title), ["昨天的留言"]);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
 test("toggles todo status and records an update event", async () => {
   await withStore(async (store) => {
     const { post } = await store.createPost({ kind: "todo", title: "买牛奶", body: "", authorName: "妈妈" });
