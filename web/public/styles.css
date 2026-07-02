@@ -587,6 +587,11 @@ h1 {
   font-weight: 900;
 }
 
+.comment-form > button:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
 .comment-tools {
   display: flex;
   grid-column: 1 / -1;
@@ -638,6 +643,42 @@ h1 {
   height: 100%;
   opacity: 0;
   cursor: pointer;
+}
+
+.comment-photo-preview {
+  display: block;
+  grid-column: 1 / -1;
+  justify-self: start;
+  width: 58px;
+  height: 58px;
+  padding: 0;
+  border: 2px solid white;
+  border-radius: 14px;
+  background: var(--sky);
+  box-shadow: 0 8px 18px rgba(39, 78, 69, 0.12);
+  overflow: hidden;
+}
+
+.comment-photo-preview[hidden] {
+  display: none;
+}
+
+.comment-photo-preview img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.comment-form-feedback {
+  grid-column: 1 / -1;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.comment-form-feedback.is-error {
+  color: #c75a4b;
 }
 
 .image-preview-overlay {

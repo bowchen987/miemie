@@ -14,3 +14,23 @@ test("comment photo input covers the visible camera button for tapping", async (
   assert.match(body, /height:\s*100%/);
   assert.doesNotMatch(body, /pointer-events:\s*none/);
 });
+
+test("comment photo selection shows visible feedback before sending", async () => {
+  const app = await readFile(new URL("../public/app.js", import.meta.url), "utf8");
+  const styles = await readFile(new URL("../public/styles.css", import.meta.url), "utf8");
+
+  assert.match(app, /comment-photo-preview/);
+  assert.match(app, /已选照片，点回复发送/);
+  assert.match(app, /照片处理中/);
+  assert.match(styles, /\.comment-photo-preview/);
+  assert.match(styles, /\.comment-form-feedback/);
+});
+
+test("uploaded photos are prepared before sending to avoid oversized iPhone originals", async () => {
+  const app = await readFile(new URL("../public/app.js", import.meta.url), "utf8");
+
+  assert.match(app, /const UPLOAD_IMAGE_MAX_EDGE\s*=/);
+  assert.match(app, /function prepareImageForUpload/);
+  assert.match(app, /canvas\.toDataURL\("image\/jpeg"/);
+  assert.match(app, /const dataUrl = await prepareImageForUpload\(file\)/);
+});

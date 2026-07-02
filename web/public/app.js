@@ -15,6 +15,8 @@ const FILTER_TITLES = {
 };
 
 const COMMENT_EMOJIS = ["❤️", "👍", "😂", "🥰", "👏", "🙏"];
+const UPLOAD_IMAGE_MAX_EDGE = 1600;
+const UPLOAD_IMAGE_QUALITY = 0.82;
 
 const state = {
   filter: "all",
@@ -170,7 +172,7 @@ async function submitPost(event) {
 }
 
 async function uploadImage(file) {
-  const dataUrl = await readFileAsDataUrl(file);
+  const dataUrl = await prepareImageForUpload(file);
   const result = await api("/api/uploads", {
     method: "POST",
     body: {
@@ -181,12 +183,47 @@ async function uploadImage(file) {
   return result.url;
 }
 
+async function prepareImageForUpload(file) {
+  const dataUrl = await readFileAsDataUrl(file);
+  if (!file.type.startsWith("image/")) {
+    return dataUrl;
+  }
+
+  try {
+    const image = await loadImage(dataUrl);
+    const scale = Math.min(1, UPLOAD_IMAGE_MAX_EDGE / Math.max(image.naturalWidth, image.naturalHeight));
+    const width = Math.max(1, Math.round(image.naturalWidth * scale));
+    const height = Math.max(1, Math.round(image.naturalHeight * scale));
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const context = canvas.getContext("2d");
+    if (!context) {
+      return dataUrl;
+    }
+
+    context.drawImage(image, 0, 0, width, height);
+    return canvas.toDataURL("image/jpeg", UPLOAD_IMAGE_QUALITY);
+  } catch {
+    return dataUrl;
+  }
+}
+
 function readFileAsDataUrl(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.addEventListener("load", () => resolve(reader.result));
     reader.addEventListener("error", reject);
     reader.readAsDataURL(file);
+  });
+}
+
+function loadImage(dataUrl) {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    image.addEventListener("load", () => resolve(image), { once: true });
+    image.addEventListener("error", reject, { once: true });
+    image.src = dataUrl;
   });
 }
 
@@ -340,6 +377,25 @@ function renderComments(post) {
   photoInput.accept = "image/*";
   photoInput.className = "comment-photo-input";
 
+  let selectedPhotoUrl = "";
+  const selectedPhoto = document.createElement("button");
+  selectedPhoto.type = "button";
+  selectedPhoto.className = "comment-photo-preview";
+  selectedPhoto.hidden = true;
+  selectedPhoto.setAttribute("aria-label", "查看已选回复照片");
+  const selectedPhotoImage = document.createElement("img");
+  selectedPhotoImage.alt = "已选回复照片";
+  selectedPhoto.append(selectedPhotoImage);
+  selectedPhoto.addEventListener("click", () => {
+    if (selectedPhotoUrl) {
+      openImagePreview(selectedPhotoUrl);
+    }
+  });
+
+  const feedback = document.createElement("p");
+  feedback.className = "comment-form-feedback";
+  feedback.hidden = true;
+
   const photoField = document.createElement("label");
   photoField.className = "comment-photo-field";
   photoField.setAttribute("aria-label", "添加回复照片");
@@ -348,10 +404,18 @@ function renderComments(post) {
   photoIcon.textContent = "📷";
   photoField.append(photoIcon, photoInput);
   photoInput.addEventListener("change", () => {
-    const hasPhoto = photoInput.files.length > 0;
-    photoField.classList.toggle("has-photo", hasPhoto);
-    photoField.setAttribute("aria-label", hasPhoto ? "已选择回复照片" : "添加回复照片");
-    photoField.title = hasPhoto ? "已选择回复照片" : "添加回复照片";
+    updateSelectedCommentPhoto({
+      feedback,
+      photoField,
+      photoInput,
+      selectedPhoto,
+      selectedPhotoImage,
+      selectedPhotoUrl,
+      submitButton,
+      setSelectedPhotoUrl: (url) => {
+        selectedPhotoUrl = url;
+      }
+    });
   });
 
   const tools = document.createElement("div");
@@ -362,11 +426,51 @@ function renderComments(post) {
   submitButton.type = "submit";
   submitButton.textContent = "回复";
 
-  form.append(textarea, submitButton, tools);
-  form.addEventListener("submit", (event) => submitComment(event, post.id, textarea, photoInput));
+  form.append(textarea, submitButton, tools, selectedPhoto, feedback);
+  form.addEventListener("submit", (event) => submitComment(event, post.id, textarea, photoInput, feedback, submitButton));
   section.append(form);
 
   return section;
+}
+
+function updateSelectedCommentPhoto({
+  feedback,
+  photoField,
+  photoInput,
+  selectedPhoto,
+  selectedPhotoImage,
+  selectedPhotoUrl,
+  submitButton,
+  setSelectedPhotoUrl
+}) {
+  if (selectedPhotoUrl) {
+    URL.revokeObjectURL(selectedPhotoUrl);
+    setSelectedPhotoUrl("");
+  }
+
+  const file = photoInput.files[0];
+  const hasPhoto = Boolean(file);
+  photoField.classList.toggle("has-photo", hasPhoto);
+  photoField.setAttribute("aria-label", hasPhoto ? "已选择回复照片" : "添加回复照片");
+  photoField.title = hasPhoto ? "已选择回复照片" : "添加回复照片";
+  submitButton.textContent = hasPhoto ? "发送照片" : "回复";
+
+  if (!hasPhoto) {
+    selectedPhoto.hidden = true;
+    selectedPhotoImage.removeAttribute("src");
+    feedback.hidden = true;
+    feedback.textContent = "";
+    feedback.classList.remove("is-error");
+    return;
+  }
+
+  const url = URL.createObjectURL(file);
+  setSelectedPhotoUrl(url);
+  selectedPhotoImage.src = url;
+  selectedPhoto.hidden = false;
+  feedback.textContent = "已选照片，点回复发送";
+  feedback.classList.remove("is-error");
+  feedback.hidden = false;
 }
 
 function appendEmoji(textarea, emoji) {
@@ -415,7 +519,7 @@ function openImagePreview(imageUrl) {
   closeButton.focus();
 }
 
-async function submitComment(event, postId, textarea, photoInput) {
+async function submitComment(event, postId, textarea, photoInput, feedback, submitButton) {
   event.preventDefault();
   if (!ensureDisplayName()) {
     return;
@@ -427,20 +531,36 @@ async function submitComment(event, postId, textarea, photoInput) {
     textarea.focus();
     return;
   }
-  const imageUrl = file ? await uploadImage(file) : null;
 
-  await api(`/api/posts/${encodeURIComponent(postId)}/comments`, {
-    method: "POST",
-    body: {
-      body,
-      imageUrl,
-      authorName: state.displayName,
-      authorMemberId: state.memberId
-    }
-  });
-  textarea.value = "";
-  photoInput.value = "";
-  await loadPosts();
+  const idleText = file ? "发送照片" : "回复";
+  submitButton.disabled = true;
+  submitButton.textContent = file ? "处理中" : "发送中";
+  feedback.textContent = file ? "照片处理中" : "发送中";
+  feedback.classList.remove("is-error");
+  feedback.hidden = false;
+
+  try {
+    const imageUrl = file ? await uploadImage(file) : null;
+
+    await api(`/api/posts/${encodeURIComponent(postId)}/comments`, {
+      method: "POST",
+      body: {
+        body,
+        imageUrl,
+        authorName: state.displayName,
+        authorMemberId: state.memberId
+      }
+    });
+    textarea.value = "";
+    photoInput.value = "";
+    await loadPosts();
+  } catch (error) {
+    feedback.textContent = error.message || "照片发送失败";
+    feedback.classList.add("is-error");
+    feedback.hidden = false;
+    submitButton.disabled = false;
+    submitButton.textContent = idleText;
+  }
 }
 
 async function toggleTodo(id) {
