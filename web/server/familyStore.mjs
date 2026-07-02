@@ -30,11 +30,13 @@ export class FamilyStore {
     const title = this.clean(input.title);
     const body = this.clean(input.body);
     const authorName = this.clean(input.authorName) || "我";
+    const authorMemberId = this.clean(input.authorMemberId) || null;
 
     if (!title) {
       throw new Error("title is required");
     }
 
+    const createdAt = this.now().toISOString();
     const post = {
       id: randomUUID(),
       kind,
@@ -42,8 +44,11 @@ export class FamilyStore {
       title,
       body,
       authorName,
-      authorMemberId: this.clean(input.authorMemberId) || null,
-      createdAt: this.now().toISOString(),
+      authorMemberId,
+      createdAt,
+      activityAt: createdAt,
+      activityByMemberId: authorMemberId,
+      activityType: "post-added",
       hasPhoto: Boolean(input.hasPhoto),
       imageUrl: input.imageUrl ?? null,
       comments: []
@@ -64,14 +69,18 @@ export class FamilyStore {
       throw new Error("todo not found");
     }
 
+    const actorMemberId = this.clean(input.actorMemberId) || null;
     post.todoStatus = post.todoStatus === "completed" ? "incomplete" : "completed";
+    post.activityAt = this.now().toISOString();
+    post.activityByMemberId = actorMemberId;
+    post.activityType = "todo-status-updated";
     await this.save();
 
     return {
       post,
       event: {
         ...this.event("todo-status-updated", post),
-        actorMemberId: this.clean(input.actorMemberId) || null
+        actorMemberId
       }
     };
   }

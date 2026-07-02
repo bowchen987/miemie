@@ -17,6 +17,8 @@ const FILTER_TITLES = {
 const COMMENT_EMOJIS = ["❤️", "👍", "😂", "🥰", "👏", "🙏"];
 const COMMENT_PHOTO_PICKER_RETURN_WINDOW_MS = 10 * 60 * 1000;
 const COMMENT_PHOTO_PICKER_SETTLE_MS = 1500;
+const NEW_BADGE_VISIBLE_MS = 1400;
+const POST_READ_STATE_KEY = "miemie.postReadState";
 const UPLOAD_IMAGE_MAX_EDGE = 1600;
 const UPLOAD_IMAGE_QUALITY = 0.82;
 
@@ -35,6 +37,7 @@ let serviceWorkerRegistration;
 let lastResumeRefreshAt = Date.now();
 let commentPhotoPickerOpenedAt = 0;
 let commentPhotoPickerClearTimer;
+let postReadState = loadPostReadState();
 const commentPhotoRefreshers = new Set();
 
 const elements = {
@@ -309,13 +312,24 @@ function renderPost(post) {
   const card = fragment.querySelector(".post-card");
   const toggle = fragment.querySelector(".todo-toggle");
   const image = fragment.querySelector(".post-image");
+  const title = fragment.querySelector("h3");
 
   card.classList.toggle("completed", post.todoStatus === "completed");
   fragment.querySelector(".post-kind").textContent = KIND_TITLES[post.kind] || post.kind;
   fragment.querySelector(".post-author").textContent = `· ${post.authorName}`;
   fragment.querySelector(".post-time").textContent = formatTime(post.createdAt);
-  fragment.querySelector("h3").textContent = post.title;
+  title.textContent = post.title;
   fragment.querySelector(".post-body").textContent = post.body;
+
+  if (shouldShowNewBadge(post)) {
+    const newBadge = document.createElement("span");
+    newBadge.className = "post-new-badge";
+    newBadge.textContent = "NEW";
+    newBadge.setAttribute("aria-label", "最新消息");
+    title.after(newBadge);
+    card.classList.add("is-new");
+    watchNewPostCard(card, post);
+  }
 
   if (post.kind === "todo") {
     toggle.textContent = post.todoStatus === "completed" ? "已完成" : "未完成";
@@ -335,6 +349,79 @@ function renderPost(post) {
   }
 
   return fragment;
+}
+
+function shouldShowNewBadge(post) {
+  const activity = latestPostActivity(post);
+  if (!post.id || !activity.at) {
+    return false;
+  }
+  if (activity.byMemberId && activity.byMemberId === state.memberId) {
+    return false;
+  }
+
+  const readAt = postReadState[post.id];
+  return !readAt || new Date(readAt).getTime() < new Date(activity.at).getTime();
+}
+
+function latestPostActivity(post) {
+  return {
+    at: post.activityAt || "",
+    byMemberId: post.activityByMemberId || "",
+    type: post.activityType || ""
+  };
+}
+
+function watchNewPostCard(card, post) {
+  let timer = null;
+  const markSeen = () => {
+    if (timer) {
+      return;
+    }
+
+    timer = window.setTimeout(() => {
+      markPostActivityRead(post);
+      card.classList.remove("is-new");
+      card.querySelector(".post-new-badge")?.remove();
+    }, NEW_BADGE_VISIBLE_MS);
+  };
+
+  if ("IntersectionObserver" in window) {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting && entry.intersectionRatio >= 0.5)) {
+          observer.disconnect();
+          markSeen();
+        }
+      },
+      { threshold: 0.5 }
+    );
+    observer.observe(card);
+    return;
+  }
+
+  markSeen();
+}
+
+function markPostActivityRead(post) {
+  const activity = latestPostActivity(post);
+  if (!post.id || !activity.at) {
+    return;
+  }
+
+  postReadState = {
+    ...postReadState,
+    [post.id]: activity.at
+  };
+  localStorage.setItem(POST_READ_STATE_KEY, JSON.stringify(postReadState));
+}
+
+function loadPostReadState() {
+  try {
+    return JSON.parse(localStorage.getItem(POST_READ_STATE_KEY) || "{}");
+  } catch {
+    return {};
+  }
 }
 
 function renderComments(post) {

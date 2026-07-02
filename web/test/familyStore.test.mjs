@@ -33,6 +33,8 @@ test("creates a trimmed todo with incomplete status and change event", async () 
     assert.equal(result.post.title, "买牛奶");
     assert.equal(result.post.body, "顺路拿快递");
     assert.equal(result.post.todoStatus, "incomplete");
+    assert.equal(result.post.activityType, "post-added");
+    assert.equal(result.post.activityAt, result.post.createdAt);
     assert.equal(result.event.type, "post-added");
     assert.equal(result.event.postId, result.post.id);
   });
@@ -89,11 +91,15 @@ test("toggles todo status and records an update event", async () => {
   await withStore(async (store) => {
     const { post } = await store.createPost({ kind: "todo", title: "买牛奶", body: "", authorName: "妈妈" });
 
-    const result = await store.toggleTodo(post.id);
+    const result = await store.toggleTodo(post.id, { actorMemberId: "baba" });
 
     assert.equal(result.post.todoStatus, "completed");
+    assert.equal(result.post.activityType, "todo-status-updated");
+    assert.equal(result.post.activityByMemberId, "baba");
+    assert.equal(new Date(result.post.activityAt) > new Date(post.createdAt), true);
     assert.equal(result.event.type, "todo-status-updated");
     assert.equal(result.event.postId, post.id);
+    assert.equal(result.event.post.activityType, "todo-status-updated");
   });
 });
 
