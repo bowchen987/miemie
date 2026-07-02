@@ -571,12 +571,28 @@ h1 {
   display: block;
 }
 
+.message-card {
+  cursor: pointer;
+}
+
+.message-card[aria-expanded="true"] {
+  cursor: default;
+}
+
 .comments-section {
   display: grid;
   gap: 9px;
   margin-top: 12px;
   padding-top: 10px;
   border-top: 1px dashed var(--line);
+}
+
+.comments-section.reply-collapsed:not(.has-comments) {
+  display: none;
+}
+
+.comments-section.reply-collapsed .comment-form {
+  display: none;
 }
 
 .comments-list {

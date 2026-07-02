@@ -58,3 +58,19 @@ test("resume refresh does not remove a pending comment photo selection", async (
   assert.match(app, /return Boolean\(photoInput\.files\[0\]\)/);
   assert.match(app, /photoInput\.addEventListener\("click", markCommentPhotoPickerOpened\)/);
 });
+
+test("message reply controls stay collapsed until the message card is opened", async () => {
+  const app = await readFile(new URL("../public/app.js", import.meta.url), "utf8");
+  const styles = await readFile(new URL("../public/styles.css", import.meta.url), "utf8");
+
+  assert.match(app, /function collapseMessageReplyControls\(card, commentsSection\)/);
+  assert.match(app, /function expandMessageReplyControls\(card, commentsSection\)/);
+  assert.match(app, /card\.classList\.add\("message-card"\)/);
+  assert.match(app, /card\.setAttribute\("aria-expanded", "false"\)/);
+  assert.match(app, /commentsSection\.classList\.add\("reply-collapsed"\)/);
+  assert.match(app, /card\.addEventListener\("click"/);
+  assert.match(app, /card\.addEventListener\("keydown"/);
+  assert.match(app, /commentsSection\.classList\.add\("has-comments"\)/);
+  assert.match(styles, /\.comments-section\.reply-collapsed \.comment-form\s*\{[^}]*display:\s*none/s);
+  assert.match(styles, /\.comments-section\.reply-collapsed:not\(\.has-comments\)\s*\{[^}]*display:\s*none/s);
+});

@@ -396,7 +396,9 @@ function renderPost(post) {
   }
 
   if (post.kind === "message") {
-    card.append(renderComments(post));
+    const commentsSection = renderComments(post);
+    card.append(commentsSection);
+    collapseMessageReplyControls(card, commentsSection);
   }
 
   return fragment;
@@ -499,11 +501,12 @@ function loadPostReadState() {
 }
 
 function renderComments(post) {
-  const section = document.createElement("section");
-  section.className = "comments-section";
+  const commentsSection = document.createElement("section");
+  commentsSection.className = "comments-section";
 
   const comments = Array.isArray(post.comments) ? post.comments : [];
   if (comments.length > 0) {
+    commentsSection.classList.add("has-comments");
     const list = document.createElement("div");
     list.className = "comments-list";
     for (const comment of comments) {
@@ -540,7 +543,7 @@ function renderComments(post) {
       item.append(author, content, time);
       list.append(item);
     }
-    section.append(list);
+    commentsSection.append(list);
   }
 
   const form = document.createElement("form");
@@ -633,9 +636,59 @@ function renderComments(post) {
 
   form.append(textarea, submitButton, tools, selectedPhoto, feedback);
   form.addEventListener("submit", (event) => submitComment(event, post.id, textarea, photoInput, feedback, submitButton));
-  section.append(form);
+  commentsSection.append(form);
 
-  return section;
+  return commentsSection;
+}
+
+function collapseMessageReplyControls(card, commentsSection) {
+  const form = commentsSection.querySelector(".comment-form");
+  if (!form) {
+    return;
+  }
+
+  card.classList.add("message-card");
+  card.setAttribute("tabindex", "0");
+  card.setAttribute("aria-expanded", "false");
+  commentsSection.classList.add("reply-collapsed");
+  form.setAttribute("aria-hidden", "true");
+
+  card.addEventListener("click", (event) => {
+    if (isMessageReplyControlTarget(event.target)) {
+      return;
+    }
+    expandMessageReplyControls(card, commentsSection);
+  });
+
+  card.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter" && event.key !== " ") {
+      return;
+    }
+    if (isMessageReplyControlTarget(event.target)) {
+      return;
+    }
+    event.preventDefault();
+    expandMessageReplyControls(card, commentsSection);
+  });
+}
+
+function expandMessageReplyControls(card, commentsSection) {
+  const form = commentsSection.querySelector(".comment-form");
+  if (!form) {
+    return;
+  }
+
+  commentsSection.classList.remove("reply-collapsed");
+  form.removeAttribute("aria-hidden");
+  card.setAttribute("aria-expanded", "true");
+}
+
+function isMessageReplyControlTarget(target) {
+  if (!(target instanceof Element)) {
+    return false;
+  }
+
+  return Boolean(target.closest("button, input, textarea, label, .comment-form, .comment-photo-button, .image-preview-overlay"));
 }
 
 function refreshCommentPhotoSelections() {
