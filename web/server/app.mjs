@@ -205,13 +205,6 @@ function pushPayloadForEvent(event) {
       url: "/"
     };
   }
-  if (event.type === "member-location-updated") {
-    return {
-      title: "miemie 距离更新",
-      body: `${event.member.displayName} 刚刚同步了位置`,
-      url: "/"
-    };
-  }
   if (event.type === "comment-added") {
     return {
       title: "miemie 有新回复",

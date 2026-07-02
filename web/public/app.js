@@ -633,12 +633,6 @@ function notificationMessage(event) {
       body: `${event.post.title}：${event.post.todoStatus === "completed" ? "已完成" : "未完成"}`
     };
   }
-  if (event.type === "member-location-updated") {
-    return {
-      title: "miemie 距离更新",
-      body: `${event.member.displayName} 刚刚同步了位置`
-    };
-  }
   if (event.type === "comment-added") {
     return {
       title: "miemie 有新回复",

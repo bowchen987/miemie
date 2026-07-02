@@ -138,6 +138,44 @@ test("updates member locations through the HTTP API", async () => {
   });
 });
 
+test("does not send background push notifications for member location updates", async () => {
+  const sent = [];
+
+  await withHttpServer(async (baseUrl) => {
+    const subscribeResponse = await fetch(`${baseUrl}/api/push/subscriptions`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        memberId: "baba",
+        displayName: "爸爸",
+        subscription: { endpoint: "https://push.example/baba", keys: { p256dh: "key", auth: "auth" } }
+      })
+    });
+    assert.equal(subscribeResponse.status, 201);
+
+    const updateResponse = await fetch(`${baseUrl}/api/members/mama/location`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        displayName: "妈妈",
+        latitude: 31.2304,
+        longitude: 121.4737
+      })
+    });
+
+    assert.equal(updateResponse.status, 200);
+  }, {
+    pushNotifier: {
+      publicKey: "test-public-key",
+      sendNotification: async (subscription, payload) => {
+        sent.push({ subscription, payload });
+      }
+    }
+  });
+
+  assert.deepEqual(sent, []);
+});
+
 test("registers push subscriptions and notifies other members when posts change", async () => {
   const sent = [];
 
