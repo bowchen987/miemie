@@ -32,7 +32,7 @@ const state = {
 localStorage.setItem("miemie.memberId", state.memberId);
 let eventSource;
 let serviceWorkerRegistration;
-let lastResumeRefreshAt = 0;
+let lastResumeRefreshAt = Date.now();
 let commentPhotoPickerOpenedAt = 0;
 let commentPhotoPickerClearTimer;
 const commentPhotoRefreshers = new Set();
@@ -71,6 +71,7 @@ async function init() {
   await refreshNotificationButton();
   try {
     await refreshAll();
+    await syncCurrentLocation({ quiet: true, requireOptIn: true });
     lastResumeRefreshAt = Date.now();
     connectEvents();
   } catch (error) {
@@ -108,11 +109,7 @@ function bindEvents() {
       refreshCommentPhotoSelections();
     }
   });
-  window.addEventListener("pageshow", (event) => {
-    if (event.persisted) {
-      refreshAfterResume();
-    }
-  });
+  window.addEventListener("pageshow", refreshAfterResume);
   window.addEventListener("pageshow", refreshCommentPhotoSelections);
   window.addEventListener("focus", refreshAfterResume);
   window.addEventListener("focus", refreshCommentPhotoSelections);
@@ -253,6 +250,7 @@ async function refreshAfterResume() {
   if (hasPendingCommentPhotoSelection() || isCommentPhotoPickerReturning()) {
     refreshCommentPhotoSelections();
     settleCommentPhotoPickerReturn();
+    await syncCurrentLocation({ quiet: true, requireOptIn: true });
     return;
   }
 

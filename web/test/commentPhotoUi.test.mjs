@@ -53,7 +53,7 @@ test("resume refresh does not remove a pending comment photo selection", async (
   assert.match(app, /function isCommentPhotoPickerReturning\(\)/);
   assert.match(
     app,
-    /if \(hasPendingCommentPhotoSelection\(\) \|\| isCommentPhotoPickerReturning\(\)\) \{\s*refreshCommentPhotoSelections\(\);\s*settleCommentPhotoPickerReturn\(\);\s*return;\s*\}/s
+    /if \(hasPendingCommentPhotoSelection\(\) \|\| isCommentPhotoPickerReturning\(\)\) \{\s*refreshCommentPhotoSelections\(\);\s*settleCommentPhotoPickerReturn\(\);\s*await syncCurrentLocation\(\{ quiet: true, requireOptIn: true \}\);\s*return;\s*\}/s
   );
   assert.match(app, /return Boolean\(photoInput\.files\[0\]\)/);
   assert.match(app, /photoInput\.addEventListener\("click", markCommentPhotoPickerOpened\)/);
