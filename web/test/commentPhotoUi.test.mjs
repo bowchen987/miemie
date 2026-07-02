@@ -45,3 +45,16 @@ test("comment photo selection is refreshed after returning from the camera", asy
   assert.match(app, /window\.addEventListener\("focus", refreshCommentPhotoSelections\)/);
   assert.match(app, /window\.addEventListener\("pageshow", refreshCommentPhotoSelections\)/);
 });
+
+test("resume refresh does not remove a pending comment photo selection", async () => {
+  const app = await readFile(new URL("../public/app.js", import.meta.url), "utf8");
+
+  assert.match(app, /function hasPendingCommentPhotoSelection\(\)/);
+  assert.match(app, /function isCommentPhotoPickerReturning\(\)/);
+  assert.match(
+    app,
+    /if \(hasPendingCommentPhotoSelection\(\) \|\| isCommentPhotoPickerReturning\(\)\) \{\s*refreshCommentPhotoSelections\(\);\s*settleCommentPhotoPickerReturn\(\);\s*return;\s*\}/s
+  );
+  assert.match(app, /return Boolean\(photoInput\.files\[0\]\)/);
+  assert.match(app, /photoInput\.addEventListener\("click", markCommentPhotoPickerOpened\)/);
+});

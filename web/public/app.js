@@ -15,6 +15,8 @@ const FILTER_TITLES = {
 };
 
 const COMMENT_EMOJIS = ["❤️", "👍", "😂", "🥰", "👏", "🙏"];
+const COMMENT_PHOTO_PICKER_RETURN_WINDOW_MS = 10 * 60 * 1000;
+const COMMENT_PHOTO_PICKER_SETTLE_MS = 1500;
 const UPLOAD_IMAGE_MAX_EDGE = 1600;
 const UPLOAD_IMAGE_QUALITY = 0.82;
 
@@ -31,6 +33,8 @@ localStorage.setItem("miemie.memberId", state.memberId);
 let eventSource;
 let serviceWorkerRegistration;
 let lastResumeRefreshAt = 0;
+let commentPhotoPickerOpenedAt = 0;
+let commentPhotoPickerClearTimer;
 const commentPhotoRefreshers = new Set();
 
 const elements = {
@@ -246,6 +250,12 @@ async function refreshAfterResume() {
     return;
   }
 
+  if (hasPendingCommentPhotoSelection() || isCommentPhotoPickerReturning()) {
+    refreshCommentPhotoSelections();
+    settleCommentPhotoPickerReturn();
+    return;
+  }
+
   const now = Date.now();
   if (now - lastResumeRefreshAt < 1500) {
     return;
@@ -380,6 +390,7 @@ function renderComments(post) {
   photoInput.type = "file";
   photoInput.accept = "image/*";
   photoInput.className = "comment-photo-input";
+  photoInput.addEventListener("click", markCommentPhotoPickerOpened);
 
   let selectedPhotoUrl = "";
   const selectedPhoto = document.createElement("button");
@@ -411,7 +422,7 @@ function renderComments(post) {
   const refreshSelectedPhoto = () => {
     if (!form.isConnected) {
       commentPhotoRefreshers.delete(refreshSelectedPhoto);
-      return;
+      return false;
     }
 
     updateSelectedCommentPhoto({
@@ -426,6 +437,7 @@ function renderComments(post) {
         selectedPhotoUrl = url;
       }
     });
+    return Boolean(photoInput.files[0]);
   };
   const refreshSelectedPhotoSoon = () => {
     window.setTimeout(refreshSelectedPhoto, 0);
@@ -454,6 +466,39 @@ function refreshCommentPhotoSelections() {
   for (const refresh of [...commentPhotoRefreshers]) {
     refresh();
   }
+}
+
+function hasPendingCommentPhotoSelection() {
+  return [...commentPhotoRefreshers].some((refresh) => refresh());
+}
+
+function markCommentPhotoPickerOpened() {
+  commentPhotoPickerOpenedAt = Date.now();
+  window.clearTimeout(commentPhotoPickerClearTimer);
+}
+
+function isCommentPhotoPickerReturning() {
+  if (!commentPhotoPickerOpenedAt) {
+    return false;
+  }
+
+  if (Date.now() - commentPhotoPickerOpenedAt > COMMENT_PHOTO_PICKER_RETURN_WINDOW_MS) {
+    commentPhotoPickerOpenedAt = 0;
+    return false;
+  }
+
+  return true;
+}
+
+function settleCommentPhotoPickerReturn() {
+  if (!commentPhotoPickerOpenedAt) {
+    return;
+  }
+
+  window.clearTimeout(commentPhotoPickerClearTimer);
+  commentPhotoPickerClearTimer = window.setTimeout(() => {
+    commentPhotoPickerOpenedAt = 0;
+  }, COMMENT_PHOTO_PICKER_SETTLE_MS);
 }
 
 function updateSelectedCommentPhoto({
