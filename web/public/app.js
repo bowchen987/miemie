@@ -31,6 +31,7 @@ localStorage.setItem("miemie.memberId", state.memberId);
 let eventSource;
 let serviceWorkerRegistration;
 let lastResumeRefreshAt = 0;
+const commentPhotoRefreshers = new Set();
 
 const elements = {
   connectionState: document.querySelector("#connectionState"),
@@ -100,6 +101,7 @@ function bindEvents() {
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "visible") {
       refreshAfterResume();
+      refreshCommentPhotoSelections();
     }
   });
   window.addEventListener("pageshow", (event) => {
@@ -107,7 +109,9 @@ function bindEvents() {
       refreshAfterResume();
     }
   });
+  window.addEventListener("pageshow", refreshCommentPhotoSelections);
   window.addEventListener("focus", refreshAfterResume);
+  window.addEventListener("focus", refreshCommentPhotoSelections);
 }
 
 function registerServiceWorker() {
@@ -403,7 +407,13 @@ function renderComments(post) {
   const photoIcon = document.createElement("span");
   photoIcon.textContent = "📷";
   photoField.append(photoIcon, photoInput);
-  photoInput.addEventListener("change", () => {
+
+  const refreshSelectedPhoto = () => {
+    if (!form.isConnected) {
+      commentPhotoRefreshers.delete(refreshSelectedPhoto);
+      return;
+    }
+
     updateSelectedCommentPhoto({
       feedback,
       photoField,
@@ -416,7 +426,14 @@ function renderComments(post) {
         selectedPhotoUrl = url;
       }
     });
-  });
+  };
+  const refreshSelectedPhotoSoon = () => {
+    window.setTimeout(refreshSelectedPhoto, 0);
+    window.setTimeout(refreshSelectedPhoto, 250);
+  };
+  commentPhotoRefreshers.add(refreshSelectedPhoto);
+  photoInput.addEventListener("input", refreshSelectedPhotoSoon);
+  photoInput.addEventListener("change", refreshSelectedPhotoSoon);
 
   const tools = document.createElement("div");
   tools.className = "comment-tools";
@@ -431,6 +448,12 @@ function renderComments(post) {
   section.append(form);
 
   return section;
+}
+
+function refreshCommentPhotoSelections() {
+  for (const refresh of [...commentPhotoRefreshers]) {
+    refresh();
+  }
 }
 
 function updateSelectedCommentPhoto({

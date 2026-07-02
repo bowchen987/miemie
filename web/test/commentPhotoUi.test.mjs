@@ -34,3 +34,14 @@ test("uploaded photos are prepared before sending to avoid oversized iPhone orig
   assert.match(app, /canvas\.toDataURL\("image\/jpeg"/);
   assert.match(app, /const dataUrl = await prepareImageForUpload\(file\)/);
 });
+
+test("comment photo selection is refreshed after returning from the camera", async () => {
+  const app = await readFile(new URL("../public/app.js", import.meta.url), "utf8");
+
+  assert.match(app, /commentPhotoRefreshers/);
+  assert.match(app, /refreshCommentPhotoSelections/);
+  assert.match(app, /photoInput\.addEventListener\("input"/);
+  assert.match(app, /photoInput\.addEventListener\("change"/);
+  assert.match(app, /window\.addEventListener\("focus", refreshCommentPhotoSelections\)/);
+  assert.match(app, /window\.addEventListener\("pageshow", refreshCommentPhotoSelections\)/);
+});
