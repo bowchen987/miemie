@@ -29,6 +29,14 @@ test("post actions are revealed by swiping left and use icon buttons", async () 
   assert.match(styles, /\.post-actions button\s*\{[^}]*width:\s*36px/s);
 });
 
+test("post action menu closes from a card click or a right swipe", async () => {
+  const app = await readFile(new URL("../public/app.js", import.meta.url), "utf8");
+
+  assert.match(app, /card\.classList\.contains\("action-menu-open"\)/);
+  assert.match(app, /hidePostActionMenu\(card\);\s*event\.preventDefault\(\);\s*event\.stopImmediatePropagation\(\);/s);
+  assert.match(app, /deltaX <= -POST_ACTION_SWIPE_THRESHOLD[\s\S]*hidePostActionMenu\(card\)/);
+});
+
 test("pinned posts render with a red pin marker", async () => {
   const app = await readFile(new URL("../public/app.js", import.meta.url), "utf8");
   const styles = await readFile(new URL("../public/styles.css", import.meta.url), "utf8");

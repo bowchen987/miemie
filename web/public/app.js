@@ -713,6 +713,13 @@ function attachPostActionMenu(card, post) {
       event.preventDefault();
       event.stopImmediatePropagation();
       delete card.dataset.suppressNextClick;
+      return;
+    }
+
+    if (card.classList.contains("action-menu-open") && !isPostActionTarget(event.target)) {
+      hidePostActionMenu(card);
+      event.preventDefault();
+      event.stopImmediatePropagation();
     }
   }, true);
 
