@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import test from "node:test";
@@ -59,6 +59,66 @@ test("filters resources and photos together", async () => {
     const resources = await store.listPosts({ filter: "resource" });
 
     assert.deepEqual(resources.map((post) => post.title), ["手工作品", "疫苗本"]);
+  });
+});
+
+test("creates resource tags and filters resources by tag and search text", async () => {
+  await withStore(async (store) => {
+    const baby = await store.createTag({ name: " 宝宝 " });
+    const medical = await store.createTag({ name: "医疗" });
+    await store.createPost({
+      kind: "resource",
+      title: "疫苗本",
+      body: "乙肝记录",
+      authorName: "妈妈",
+      tagIds: [baby.tag.id, medical.tag.id]
+    });
+    await store.createPost({
+      kind: "resource",
+      title: "户口本",
+      body: "放在抽屉",
+      authorName: "爸爸",
+      tagIds: [baby.tag.id]
+    });
+
+    const tags = await store.listTags();
+    const babyResources = await store.listPosts({ filter: "resource", tagId: baby.tag.id });
+    const searched = await store.listPosts({ filter: "resource", tagId: baby.tag.id, q: "乙肝" });
+
+    assert.deepEqual(tags.map((tag) => tag.name), ["宝宝", "医疗"]);
+    assert.deepEqual(babyResources.map((post) => post.title), ["户口本", "疫苗本"]);
+    assert.deepEqual(searched.map((post) => post.title), ["疫苗本"]);
+    assert.deepEqual(searched[0].tagIds, [baby.tag.id, medical.tag.id]);
+  });
+});
+
+test("updates and deletes tags without deleting tagged resources", async () => {
+  await withStore(async (store) => {
+    const baby = await store.createTag({ name: "宝宝" });
+    const medical = await store.createTag({ name: "医疗" });
+    const tagged = await store.createPost({
+      kind: "resource",
+      title: "疫苗本",
+      body: "",
+      authorName: "妈妈",
+      tagIds: [baby.tag.id, medical.tag.id]
+    });
+    await store.createPost({ kind: "resource", title: "无标签资料", body: "", authorName: "爸爸" });
+
+    const renamed = await store.updateTag(baby.tag.id, { name: "宝宝资料" });
+    const deleted = await store.deleteTag(medical.tag.id);
+    const posts = await store.listPosts({ filter: "resource", tagId: baby.tag.id });
+    const untagged = await store.listPosts({ filter: "resource", tagId: "__untagged" });
+    const tags = await store.listTags();
+
+    assert.equal(renamed.tag.name, "宝宝资料");
+    assert.equal(renamed.event.type, "tag-updated");
+    assert.equal(deleted.tag.name, "医疗");
+    assert.equal(deleted.event.type, "tag-deleted");
+    assert.deepEqual(tags.map((tag) => tag.name), ["宝宝资料"]);
+    assert.deepEqual(posts.map((post) => post.id), [tagged.post.id]);
+    assert.deepEqual(posts[0].tagIds, [baby.tag.id]);
+    assert.deepEqual(untagged.map((post) => post.title), ["无标签资料"]);
   });
 });
 
@@ -194,6 +254,39 @@ test("persists posts to disk", async () => {
 
     assert.equal(posts.length, 1);
     assert.equal(posts[0].title, "早点回家");
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("loads older data files with empty tag defaults", async () => {
+  const dir = await mkdtemp(path.join(tmpdir(), "miemie-store-"));
+  try {
+    await writeFile(
+      path.join(dir, "family-posts.json"),
+      JSON.stringify({
+        posts: [
+          {
+            id: "old-resource",
+            kind: "resource",
+            title: "旧资料",
+            body: "",
+            authorName: "妈妈",
+            createdAt: "2026-07-01T08:00:00.000Z"
+          }
+        ],
+        members: {},
+        pushSubscriptions: []
+      })
+    );
+
+    const store = new FamilyStore({ dataDir: dir });
+    await store.ready;
+    const tags = await store.listTags();
+    const posts = await store.listPosts({ filter: "resource" });
+
+    assert.deepEqual(tags, []);
+    assert.deepEqual(posts[0].tagIds, []);
   } finally {
     await rm(dir, { recursive: true, force: true });
   }

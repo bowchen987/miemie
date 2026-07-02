@@ -95,6 +95,19 @@
         <form id="postForm">
           <input id="postTitleInput" name="title" placeholder="写一个标题" maxlength="40" required>
           <textarea id="postBodyInput" name="body" rows="4" placeholder="补充一点细节"></textarea>
+          <section id="resourceTagPicker" class="resource-tag-picker" hidden>
+            <div class="resource-tag-picker-heading">
+              <span>资料标签</span>
+            </div>
+            <div id="composerTagList" class="resource-tag-list" aria-label="资料标签"></div>
+            <label class="tag-create-field">
+              <span>新标签</span>
+              <div>
+                <input id="newTagInput" type="text" maxlength="16" placeholder="如 疫苗、证件">
+                <button id="createTagButton" type="button">添加</button>
+              </div>
+            </label>
+          </section>
           <label class="file-field">
             <span>添加照片</span>
             <input id="photoInput" name="photo" type="file" accept="image/*">
@@ -119,6 +132,12 @@
             <span class="filter-badge" data-filter-badge="message" hidden></span>
           </button>
         </nav>
+        <section id="resourceArchiveTools" class="resource-archive-tools" hidden>
+          <label class="resource-search-field" aria-label="搜索资料">
+            <input id="resourceSearchInput" type="search" placeholder="搜索资料标题或正文">
+          </label>
+          <div id="resourceTagFilters" class="resource-tag-filters" aria-label="资料标签筛选"></div>
+        </section>
         <div class="section-heading">
           <h2 id="feedTitle">今天的小纸条</h2>
           <span id="connectionState">连接中</span>

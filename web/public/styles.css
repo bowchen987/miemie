@@ -389,6 +389,96 @@ h1 {
   resize: vertical;
 }
 
+.resource-tag-picker {
+  display: grid;
+  gap: 9px;
+  padding: 10px;
+  border: 1px dashed var(--line);
+  border-radius: 16px;
+  background: rgba(215, 241, 228, 0.36);
+}
+
+.resource-tag-picker[hidden] {
+  display: none;
+}
+
+.resource-tag-picker-heading,
+.tag-create-field > span {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.resource-tag-list,
+.resource-tag-filters {
+  display: flex;
+  gap: 7px;
+  overflow-x: auto;
+  padding-bottom: 1px;
+}
+
+.resource-tag-chip,
+.tag-icon-button {
+  min-height: 30px;
+  border-radius: 999px;
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.resource-tag-chip {
+  flex: 0 0 auto;
+  padding: 0 11px;
+  background: rgba(204, 232, 245, 0.72);
+}
+
+.resource-tag-chip.active {
+  background: var(--mint-strong);
+  color: white;
+}
+
+.resource-tag-chip-group {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 4px;
+  padding: 3px;
+  border-radius: 999px;
+  background: rgba(255, 254, 248, 0.72);
+}
+
+.tag-icon-button {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  padding: 0;
+  background: var(--mint);
+}
+
+.tag-icon-button.delete-tag-button {
+  background: rgba(255, 181, 166, 0.7);
+}
+
+.tag-create-field {
+  display: grid;
+  gap: 7px;
+}
+
+.tag-create-field div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+}
+
+.tag-create-field button {
+  min-height: 38px;
+  padding: 0 13px;
+  border-radius: 14px;
+  background: var(--mint);
+  color: var(--ink);
+  font-weight: 900;
+}
+
 .file-field {
   display: grid;
   gap: 8px;
@@ -467,6 +557,26 @@ h1 {
 
 .filter-tabs button.active .filter-badge {
   border-color: var(--paper);
+}
+
+.resource-archive-tools {
+  display: grid;
+  gap: 9px;
+  margin-bottom: 12px;
+}
+
+.resource-archive-tools[hidden] {
+  display: none;
+}
+
+.resource-search-field input {
+  width: 100%;
+  padding: 11px 12px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: white;
+  color: var(--ink);
+  outline: none;
 }
 
 .feed-list {
@@ -618,6 +728,22 @@ h1 {
   font-size: 14px;
   line-height: 1.5;
   white-space: pre-wrap;
+}
+
+.post-tags {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 9px;
+}
+
+.post-tag {
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: rgba(215, 241, 228, 0.72);
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 900;
 }
 
 .post-image {

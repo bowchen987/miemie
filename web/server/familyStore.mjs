@@ -4,6 +4,8 @@ import { randomUUID } from "node:crypto";
 
 const VALID_KINDS = new Set(["todo", "resource", "message", "photo"]);
 const VALID_FILTERS = new Set(["all", "todo", "resource", "message"]);
+const RESOURCE_KINDS = new Set(["resource", "photo"]);
+const UNTAGGED_RESOURCE_FILTER = "__untagged";
 
 export class FamilyStore {
   constructor({ dataDir = path.join(process.cwd(), "data"), now = () => new Date() } = {}) {
@@ -11,18 +13,105 @@ export class FamilyStore {
     this.filePath = path.join(dataDir, "family-posts.json");
     this.now = now;
     this.posts = [];
+    this.tags = [];
     this.members = {};
     this.pushSubscriptions = [];
     this.ready = this.load();
   }
 
-  async listPosts({ filter = "all", from = "", to = "" } = {}) {
+  async listPosts({ filter = "all", from = "", to = "", tagId = "", q = "" } = {}) {
     this.assertFilter(filter);
     const range = this.dateRange({ from, to });
+    const searchText = this.clean(q).toLowerCase();
     return this.posts
       .filter((post) => this.includesFilter(post, filter))
       .filter((post) => this.includesDateRange(post, range))
+      .filter((post) => this.includesResourceTag(post, filter, tagId))
+      .filter((post) => this.includesSearchText(post, searchText))
       .sort((left, right) => this.comparePosts(left, right, filter));
+  }
+
+  async listTags() {
+    return [...this.tags].sort((left, right) => new Date(left.createdAt) - new Date(right.createdAt));
+  }
+
+  async createTag(input = {}) {
+    const name = this.clean(input.name);
+    if (!name) {
+      throw new Error("tag name is required");
+    }
+
+    const createdAt = this.now().toISOString();
+    const tag = {
+      id: randomUUID(),
+      name,
+      createdAt,
+      updatedAt: createdAt
+    };
+    this.tags.push(tag);
+    await this.save();
+
+    return {
+      tag,
+      event: {
+        id: randomUUID(),
+        type: "tag-added",
+        tag,
+        createdAt
+      }
+    };
+  }
+
+  async updateTag(id, input = {}) {
+    const tag = this.tags.find((item) => item.id === id);
+    if (!tag) {
+      throw new Error("tag not found");
+    }
+
+    const name = this.clean(input.name);
+    if (!name) {
+      throw new Error("tag name is required");
+    }
+
+    tag.name = name;
+    tag.updatedAt = this.now().toISOString();
+    await this.save();
+
+    return {
+      tag,
+      event: {
+        id: randomUUID(),
+        type: "tag-updated",
+        tag,
+        createdAt: tag.updatedAt
+      }
+    };
+  }
+
+  async deleteTag(id) {
+    const index = this.tags.findIndex((item) => item.id === id);
+    if (index === -1) {
+      throw new Error("tag not found");
+    }
+
+    const [tag] = this.tags.splice(index, 1);
+    for (const post of this.posts) {
+      if (Array.isArray(post.tagIds)) {
+        post.tagIds = post.tagIds.filter((tagId) => tagId !== id);
+      }
+    }
+    const deletedAt = this.now().toISOString();
+    await this.save();
+
+    return {
+      tag,
+      event: {
+        id: randomUUID(),
+        type: "tag-deleted",
+        tag,
+        createdAt: deletedAt
+      }
+    };
   }
 
   async createPost(input) {
@@ -50,6 +139,7 @@ export class FamilyStore {
       activityByMemberId: authorMemberId,
       activityType: "post-added",
       pinnedAt: null,
+      tagIds: this.cleanTagIds(input.tagIds, kind),
       hasPhoto: Boolean(input.hasPhoto),
       imageUrl: input.imageUrl ?? null,
       comments: []
@@ -108,6 +198,9 @@ export class FamilyStore {
       post.hasPhoto = Boolean(input.hasPhoto);
     } else {
       post.hasPhoto = Boolean(post.imageUrl);
+    }
+    if (Object.hasOwn(input, "tagIds")) {
+      post.tagIds = this.cleanTagIds(input.tagIds, post.kind);
     }
     post.activityAt = this.now().toISOString();
     post.activityByMemberId = actorMemberId;
@@ -285,7 +378,10 @@ export class FamilyStore {
     try {
       const raw = await readFile(this.filePath, "utf8");
       const data = JSON.parse(raw);
-      this.posts = Array.isArray(data.posts) ? data.posts.map((post) => ({ comments: [], pinnedAt: null, ...post })) : [];
+      this.posts = Array.isArray(data.posts)
+        ? data.posts.map((post) => ({ comments: [], pinnedAt: null, tagIds: [], ...post }))
+        : [];
+      this.tags = Array.isArray(data.tags) ? data.tags : [];
       this.members = data.members && typeof data.members === "object" ? data.members : {};
       this.pushSubscriptions = Array.isArray(data.pushSubscriptions) ? data.pushSubscriptions : [];
     } catch (error) {
@@ -293,6 +389,7 @@ export class FamilyStore {
         throw error;
       }
       this.posts = [];
+      this.tags = [];
       this.members = {};
       this.pushSubscriptions = [];
       await this.save();
@@ -302,7 +399,11 @@ export class FamilyStore {
   async save() {
     await writeFile(
       this.filePath,
-      JSON.stringify({ posts: this.posts, members: this.members, pushSubscriptions: this.pushSubscriptions }, null, 2)
+      JSON.stringify(
+        { posts: this.posts, tags: this.tags, members: this.members, pushSubscriptions: this.pushSubscriptions },
+        null,
+        2
+      )
     );
   }
 
@@ -333,12 +434,43 @@ export class FamilyStore {
     return post.kind === filter;
   }
 
+  includesResourceTag(post, filter, tagId) {
+    const normalizedTagId = this.clean(tagId);
+    if (filter !== "resource" || !normalizedTagId) {
+      return true;
+    }
+
+    const tagIds = Array.isArray(post.tagIds) ? post.tagIds : [];
+    if (normalizedTagId === UNTAGGED_RESOURCE_FILTER) {
+      return tagIds.length === 0;
+    }
+
+    return tagIds.includes(normalizedTagId);
+  }
+
+  includesSearchText(post, searchText) {
+    if (!searchText) {
+      return true;
+    }
+
+    return `${post.title ?? ""} ${post.body ?? ""}`.toLowerCase().includes(searchText);
+  }
+
   comparePosts(left, right, filter) {
     if (filter !== "all" && Boolean(left.pinnedAt) !== Boolean(right.pinnedAt)) {
       return left.pinnedAt ? -1 : 1;
     }
 
     return new Date(right.createdAt) - new Date(left.createdAt);
+  }
+
+  cleanTagIds(tagIds, kind) {
+    if (!RESOURCE_KINDS.has(kind) || !Array.isArray(tagIds)) {
+      return [];
+    }
+
+    const knownTagIds = new Set(this.tags.map((tag) => tag.id));
+    return [...new Set(tagIds.map((tagId) => this.clean(tagId)).filter((tagId) => knownTagIds.has(tagId)))];
   }
 
   dateRange({ from, to }) {

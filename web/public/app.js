@@ -14,6 +14,9 @@ const FILTER_TITLES = {
   message: "全部留言"
 };
 
+const RESOURCE_KINDS = new Set(["resource", "photo"]);
+const UNTAGGED_RESOURCE_FILTER = "__untagged";
+
 const EMOTIONAL_STATUS_COPY = {
   empty: [
     "打开定位后，小家距离会亮起来",
@@ -71,6 +74,10 @@ const state = {
   filter: "all",
   composeKind: "message",
   editingPostId: null,
+  resourceSearch: "",
+  resourceTagFilter: "all",
+  selectedResourceTagIds: [],
+  tags: [],
   filterBadgePosts: {
     todo: [],
     resource: [],
@@ -104,12 +111,19 @@ const elements = {
   feedList: document.querySelector("#feedList"),
   feedTitle: document.querySelector("#feedTitle"),
   identityPanel: document.querySelector("#identityPanel"),
+  composerTagList: document.querySelector("#composerTagList"),
+  createTagButton: document.querySelector("#createTagButton"),
+  newTagInput: document.querySelector("#newTagInput"),
   photoInput: document.querySelector("#photoInput"),
   postBodyInput: document.querySelector("#postBodyInput"),
   postForm: document.querySelector("#postForm"),
   postTemplate: document.querySelector("#postTemplate"),
   postTitleInput: document.querySelector("#postTitleInput"),
   postSubmitButton: document.querySelector("#postForm button[type='submit']"),
+  resourceArchiveTools: document.querySelector("#resourceArchiveTools"),
+  resourceSearchInput: document.querySelector("#resourceSearchInput"),
+  resourceTagFilters: document.querySelector("#resourceTagFilters"),
+  resourceTagPicker: document.querySelector("#resourceTagPicker"),
   saveNameButton: document.querySelector("#saveNameButton"),
   saveFamilyCodeButton: document.querySelector("#saveFamilyCodeButton"),
   shareLocationButton: document.querySelector("#shareLocationButton"),
@@ -149,11 +163,23 @@ function bindEvents() {
     button.addEventListener("click", () => {
       state.filter = button.dataset.filter;
       updateFilterTabs();
+      renderResourceArchiveTools();
       loadPosts();
     });
   });
 
   elements.postForm.addEventListener("submit", submitPost);
+  elements.createTagButton.addEventListener("click", createResourceTagFromComposer);
+  elements.newTagInput.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      createResourceTagFromComposer();
+    }
+  });
+  elements.resourceSearchInput.addEventListener("input", () => {
+    state.resourceSearch = elements.resourceSearchInput.value.trim();
+    loadPosts();
+  });
   elements.saveNameButton.addEventListener("click", saveDisplayName);
   elements.saveFamilyCodeButton.addEventListener("click", saveFamilyCode);
   elements.shareLocationButton.addEventListener("click", shareLocation);
@@ -186,11 +212,15 @@ function registerServiceWorker() {
 function openComposer(kind, post = null) {
   state.composeKind = kind;
   state.editingPostId = post?.id ?? null;
+  state.selectedResourceTagIds = RESOURCE_KINDS.has(kind) && Array.isArray(post?.tagIds) ? [...post.tagIds] : [];
   elements.composerTitle.textContent = `${post ? "编辑" : "发布"}${KIND_TITLES[kind]}`;
   elements.postTitleInput.placeholder = placeholderForKind(kind);
   elements.postBodyInput.value = post?.body ?? "";
   elements.postTitleInput.value = post?.title ?? "";
   elements.photoInput.value = "";
+  elements.newTagInput.value = "";
+  elements.resourceTagPicker.hidden = !RESOURCE_KINDS.has(kind);
+  renderComposerTagPicker();
   if (post) {
     elements.postSubmitButton.textContent = "保存修改";
   } else {
@@ -202,7 +232,9 @@ function openComposer(kind, post = null) {
 
 function closeComposer() {
   state.editingPostId = null;
+  state.selectedResourceTagIds = [];
   elements.composer.hidden = true;
+  elements.resourceTagPicker.hidden = true;
   elements.postSubmitButton.textContent = "发布到 miemie";
 }
 
@@ -238,6 +270,9 @@ async function submitPost(event) {
       body,
       actorMemberId: state.memberId
     };
+    if (RESOURCE_KINDS.has(state.composeKind)) {
+      updateBody.tagIds = selectedResourceTagIds();
+    }
     if (file) {
       updateBody.hasPhoto = Boolean(imageUrl);
       updateBody.imageUrl = imageUrl;
@@ -256,6 +291,7 @@ async function submitPost(event) {
         body,
         authorName: state.displayName,
         authorMemberId: state.memberId,
+        tagIds: selectedResourceTagIds(),
         hasPhoto: Boolean(imageUrl),
         imageUrl
       }
@@ -323,12 +359,169 @@ function loadImage(dataUrl) {
   });
 }
 
+async function loadTags() {
+  const result = await api("/api/tags");
+  state.tags = Array.isArray(result.tags) ? result.tags : [];
+  state.selectedResourceTagIds = selectedResourceTagIds();
+  renderResourceArchiveTools();
+  renderComposerTagPicker();
+}
+
+function renderResourceArchiveTools() {
+  elements.resourceArchiveTools.hidden = state.filter !== "resource";
+  if (elements.resourceArchiveTools.hidden) {
+    return;
+  }
+
+  if (document.activeElement !== elements.resourceSearchInput) {
+    elements.resourceSearchInput.value = state.resourceSearch;
+  }
+
+  elements.resourceTagFilters.replaceChildren(
+    resourceTagFilterButton("all", "全部"),
+    resourceTagFilterButton(UNTAGGED_RESOURCE_FILTER, "未打标签")
+  );
+  for (const tag of state.tags) {
+    elements.resourceTagFilters.append(resourceTagFilterButton(tag.id, tag.name));
+  }
+}
+
+function resourceTagFilterButton(value, label) {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "resource-tag-chip";
+  button.classList.toggle("active", state.resourceTagFilter === value);
+  button.textContent = label;
+  button.addEventListener("click", () => {
+    state.resourceTagFilter = value;
+    renderResourceArchiveTools();
+    loadPosts();
+  });
+  return button;
+}
+
+function resourceTagManagementGroup(tag) {
+  const group = document.createElement("span");
+  group.className = "resource-tag-chip-group";
+
+  const selectButton = document.createElement("button");
+  selectButton.type = "button";
+  selectButton.className = "resource-tag-chip";
+  selectButton.classList.toggle("active", selectedResourceTagIds().includes(tag.id));
+  selectButton.textContent = tag.name;
+  selectButton.addEventListener("click", () => {
+    toggleSelectedResourceTag(tag.id);
+    renderComposerTagPicker();
+  });
+
+  const renameButton = document.createElement("button");
+  renameButton.type = "button";
+  renameButton.className = "tag-icon-button";
+  renameButton.textContent = "✎";
+  renameButton.title = "重命名标签";
+  renameButton.setAttribute("aria-label", `重命名标签${tag.name}`);
+  renameButton.addEventListener("click", () => renameResourceTag(tag));
+
+  const deleteButton = document.createElement("button");
+  deleteButton.type = "button";
+  deleteButton.className = "tag-icon-button delete-tag-button";
+  deleteButton.textContent = "×";
+  deleteButton.title = "删除标签";
+  deleteButton.setAttribute("aria-label", `删除标签${tag.name}`);
+  deleteButton.addEventListener("click", () => deleteResourceTag(tag));
+
+  group.append(selectButton, renameButton, deleteButton);
+  return group;
+}
+
+function renderComposerTagPicker() {
+  elements.composerTagList.replaceChildren();
+  if (elements.resourceTagPicker.hidden) {
+    return;
+  }
+
+  for (const tag of state.tags) {
+    elements.composerTagList.append(resourceTagManagementGroup(tag));
+  }
+}
+
+function toggleSelectedResourceTag(tagId) {
+  if (state.selectedResourceTagIds.includes(tagId)) {
+    state.selectedResourceTagIds = state.selectedResourceTagIds.filter((id) => id !== tagId);
+    return;
+  }
+
+  state.selectedResourceTagIds = [...state.selectedResourceTagIds, tagId];
+}
+
+function selectedResourceTagIds() {
+  const knownTagIds = new Set(state.tags.map((tag) => tag.id));
+  return state.selectedResourceTagIds.filter((tagId) => knownTagIds.has(tagId));
+}
+
+async function createResourceTagFromComposer() {
+  const name = elements.newTagInput.value.trim();
+  if (!name) {
+    elements.newTagInput.focus();
+    return;
+  }
+
+  const result = await api("/api/tags", {
+    method: "POST",
+    body: { name }
+  });
+  state.tags = [...state.tags, result.tag];
+  state.selectedResourceTagIds = [...selectedResourceTagIds(), result.tag.id];
+  elements.newTagInput.value = "";
+  renderComposerTagPicker();
+  renderResourceArchiveTools();
+}
+
+async function renameResourceTag(tag) {
+  const name = window.prompt("修改标签名称", tag.name);
+  if (name === null) {
+    return;
+  }
+  const trimmedName = name.trim();
+  if (!trimmedName) {
+    return;
+  }
+
+  await api(`/api/tags/${encodeURIComponent(tag.id)}`, {
+    method: "PATCH",
+    body: { name: trimmedName }
+  });
+  await loadTags();
+  renderPosts();
+}
+
+async function deleteResourceTag(tag) {
+  if (!window.confirm(`删除标签「${tag.name}」吗？资料不会被删除。`)) {
+    return;
+  }
+
+  await api(`/api/tags/${encodeURIComponent(tag.id)}`, { method: "DELETE" });
+  if (state.resourceTagFilter === tag.id) {
+    state.resourceTagFilter = "all";
+  }
+  state.selectedResourceTagIds = state.selectedResourceTagIds.filter((tagId) => tagId !== tag.id);
+  await loadTags();
+  await loadPosts();
+  await loadFilterBadges();
+}
+
 async function loadPosts() {
   const params = new URLSearchParams({ filter: state.filter });
   if (state.filter === "all") {
     for (const [key, value] of todayRangeParams()) {
       params.set(key, value);
     }
+  }
+  if (state.filter === "resource" && state.resourceTagFilter !== "all") {
+    params.set("tagId", state.resourceTagFilter);
+  }
+  if (state.filter === "resource" && state.resourceSearch) {
+    params.set("q", state.resourceSearch);
   }
 
   const result = await api(`/api/posts?${params}`);
@@ -347,6 +540,7 @@ function todayRangeParams() {
 }
 
 async function refreshAll() {
+  await loadTags();
   await Promise.all([loadPosts(), loadStatus(), loadFilterBadges()]);
 }
 
@@ -380,6 +574,7 @@ async function refreshAfterResume() {
 
 function renderPosts() {
   elements.feedTitle.textContent = FILTER_TITLES[state.filter];
+  renderResourceArchiveTools();
   elements.feedList.replaceChildren();
 
   if (state.posts.length === 0) {
@@ -409,6 +604,10 @@ function renderPost(post) {
   fragment.querySelector(".post-time").textContent = formatTime(post.createdAt);
   title.textContent = post.title;
   fragment.querySelector(".post-body").textContent = post.body;
+  const postTags = renderPostTags(post);
+  if (postTags) {
+    fragment.querySelector(".post-body").after(postTags);
+  }
 
   if (shouldShowNewBadge(post)) {
     const newBadge = document.createElement("span");
@@ -442,6 +641,28 @@ function renderPost(post) {
   }
 
   return fragment;
+}
+
+function renderPostTags(post) {
+  if (!RESOURCE_KINDS.has(post.kind) || !Array.isArray(post.tagIds) || post.tagIds.length === 0) {
+    return null;
+  }
+
+  const tagById = new Map(state.tags.map((tag) => [tag.id, tag]));
+  const tags = post.tagIds.map((tagId) => tagById.get(tagId)).filter(Boolean);
+  if (tags.length === 0) {
+    return null;
+  }
+
+  const list = document.createElement("div");
+  list.className = "post-tags";
+  for (const tag of tags) {
+    const chip = document.createElement("span");
+    chip.className = "post-tag";
+    chip.textContent = tag.name;
+    list.append(chip);
+  }
+  return list;
 }
 
 function attachPostActionMenu(card, post) {

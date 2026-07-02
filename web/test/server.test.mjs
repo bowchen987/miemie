@@ -92,6 +92,103 @@ test("lists today's paper by requested day range through the HTTP API", async ()
   }, { now: () => currentTime });
 });
 
+test("manages resource tags through the HTTP API and filters resources", async () => {
+  await withHttpServer(async (baseUrl) => {
+    const tagResponse = await fetch(`${baseUrl}/api/tags`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ name: "宝宝" })
+    });
+    assert.equal(tagResponse.status, 201);
+    const createdTag = await tagResponse.json();
+
+    const renamedResponse = await fetch(`${baseUrl}/api/tags/${createdTag.tag.id}`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ name: "宝宝资料" })
+    });
+    assert.equal(renamedResponse.status, 200);
+    assert.equal((await renamedResponse.json()).tag.name, "宝宝资料");
+
+    const postResponse = await fetch(`${baseUrl}/api/posts`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        kind: "resource",
+        title: "疫苗本",
+        body: "乙肝记录",
+        authorName: "妈妈",
+        tagIds: [createdTag.tag.id]
+      })
+    });
+    const createdPost = await postResponse.json();
+    assert.deepEqual(createdPost.post.tagIds, [createdTag.tag.id]);
+
+    await fetch(`${baseUrl}/api/posts`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ kind: "resource", title: "户口本", body: "抽屉", authorName: "爸爸" })
+    });
+
+    const filteredResponse = await fetch(
+      `${baseUrl}/api/posts?filter=resource&tagId=${createdTag.tag.id}&q=${encodeURIComponent("乙肝")}`
+    );
+    assert.deepEqual((await filteredResponse.json()).posts.map((post) => post.title), ["疫苗本"]);
+
+    const deleteResponse = await fetch(`${baseUrl}/api/tags/${createdTag.tag.id}`, { method: "DELETE" });
+    assert.equal(deleteResponse.status, 200);
+
+    const tagsResponse = await fetch(`${baseUrl}/api/tags`);
+    assert.deepEqual((await tagsResponse.json()).tags, []);
+
+    const untaggedResponse = await fetch(`${baseUrl}/api/posts?filter=resource&tagId=__untagged`);
+    assert.deepEqual((await untaggedResponse.json()).posts.map((post) => post.title), ["户口本", "疫苗本"]);
+  });
+});
+
+test("does not send background push notifications for tag management", async () => {
+  const sent = [];
+
+  await withHttpServer(async (baseUrl) => {
+    const subscribeResponse = await fetch(`${baseUrl}/api/push/subscriptions`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        memberId: "baba",
+        displayName: "爸爸",
+        subscription: { endpoint: "https://push.example/baba", keys: { p256dh: "key", auth: "auth" } }
+      })
+    });
+    assert.equal(subscribeResponse.status, 201);
+
+    const createResponse = await fetch(`${baseUrl}/api/tags`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ name: "证件" })
+    });
+    const created = await createResponse.json();
+
+    const updateResponse = await fetch(`${baseUrl}/api/tags/${created.tag.id}`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ name: "证件资料" })
+    });
+    assert.equal(updateResponse.status, 200);
+
+    const deleteResponse = await fetch(`${baseUrl}/api/tags/${created.tag.id}`, { method: "DELETE" });
+    assert.equal(deleteResponse.status, 200);
+  }, {
+    pushNotifier: {
+      publicKey: "test-public-key",
+      sendNotification: async (subscription, payload) => {
+        sent.push({ subscription, payload });
+      }
+    }
+  });
+
+  assert.deepEqual(sent, []);
+});
+
 test("protects API routes when a family code is configured", async () => {
   await withHttpServer(async (baseUrl) => {
     const denied = await fetch(`${baseUrl}/api/posts`);

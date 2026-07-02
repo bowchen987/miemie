@@ -49,9 +49,16 @@ export function createServer({
         const posts = await store.listPosts({
           filter: url.searchParams.get("filter") ?? "all",
           from: url.searchParams.get("from") ?? "",
-          to: url.searchParams.get("to") ?? ""
+          to: url.searchParams.get("to") ?? "",
+          tagId: url.searchParams.get("tagId") ?? "",
+          q: url.searchParams.get("q") ?? ""
         });
         return sendJson(response, 200, { posts });
+      }
+
+      if (request.method === "GET" && url.pathname === "/api/tags") {
+        const tags = await store.listTags();
+        return sendJson(response, 200, { tags });
       }
 
       if (request.method === "GET" && url.pathname === "/api/status") {
@@ -68,6 +75,25 @@ export function createServer({
       if (request.method === "POST" && url.pathname === "/api/push/subscriptions") {
         const result = await store.savePushSubscription(await readJson(request));
         return sendJson(response, 201, { subscription: result });
+      }
+
+      if (request.method === "POST" && url.pathname === "/api/tags") {
+        const result = await store.createTag(await readJson(request));
+        publish(events, result.event);
+        return sendJson(response, 201, result);
+      }
+
+      const tagMatch = url.pathname.match(/^\/api\/tags\/([^/]+)$/);
+      if (request.method === "PATCH" && tagMatch) {
+        const result = await store.updateTag(decodeURIComponent(tagMatch[1]), await readJson(request));
+        publish(events, result.event);
+        return sendJson(response, 200, result);
+      }
+
+      if (request.method === "DELETE" && tagMatch) {
+        const result = await store.deleteTag(decodeURIComponent(tagMatch[1]));
+        publish(events, result.event);
+        return sendJson(response, 200, result);
       }
 
       if (request.method === "POST" && url.pathname === "/api/posts") {
