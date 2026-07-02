@@ -69,6 +69,11 @@ const UPLOAD_IMAGE_QUALITY = 0.82;
 const state = {
   filter: "all",
   composeKind: "message",
+  filterBadgePosts: {
+    todo: [],
+    resource: [],
+    message: []
+  },
   posts: [],
   memberId: localStorage.getItem("miemie.memberId") || crypto.randomUUID(),
   displayName: localStorage.getItem("miemie.displayName") || "",
@@ -222,6 +227,7 @@ async function submitPost(event) {
 
   elements.composer.hidden = true;
   await loadPosts();
+  await loadFilterBadges();
 }
 
 async function uploadImage(file) {
@@ -304,7 +310,7 @@ function todayRangeParams() {
 }
 
 async function refreshAll() {
-  await Promise.all([loadPosts(), loadStatus()]);
+  await Promise.all([loadPosts(), loadStatus(), loadFilterBadges()]);
 }
 
 async function refreshAfterResume() {
@@ -410,10 +416,32 @@ function shouldShowNewBadge(post) {
 }
 
 function latestPostActivity(post) {
+  const commentActivity = latestCommentActivity(post);
+  if (commentActivity && new Date(commentActivity.at) > new Date(post.activityAt || post.createdAt || 0)) {
+    return commentActivity;
+  }
+
   return {
     at: post.activityAt || "",
     byMemberId: post.activityByMemberId || "",
     type: post.activityType || ""
+  };
+}
+
+function latestCommentActivity(post) {
+  const comments = Array.isArray(post.comments) ? post.comments : [];
+  const latestComment = comments
+    .filter((comment) => comment.createdAt)
+    .sort((left, right) => new Date(right.createdAt) - new Date(left.createdAt))[0];
+
+  if (!latestComment) {
+    return null;
+  }
+
+  return {
+    at: latestComment.createdAt,
+    byMemberId: latestComment.authorMemberId || "",
+    type: "comment-added"
   };
 }
 
@@ -459,6 +487,7 @@ function markPostActivityRead(post) {
     [post.id]: activity.at
   };
   localStorage.setItem(POST_READ_STATE_KEY, JSON.stringify(postReadState));
+  renderFilterBadges();
 }
 
 function loadPostReadState() {
@@ -769,6 +798,7 @@ async function submitComment(event, postId, textarea, photoInput, feedback, subm
     textarea.value = "";
     photoInput.value = "";
     await loadPosts();
+    await loadFilterBadges();
   } catch (error) {
     feedback.textContent = error.message || "照片发送失败";
     feedback.classList.add("is-error");
@@ -784,12 +814,64 @@ async function toggleTodo(id) {
     body: { actorMemberId: state.memberId }
   });
   await loadPosts();
+  await loadFilterBadges();
 }
 
 function updateFilterTabs() {
   document.querySelectorAll("[data-filter]").forEach((button) => {
     button.classList.toggle("active", button.dataset.filter === state.filter);
   });
+}
+
+async function loadFilterBadges() {
+  const [todoResult, resourceResult, messageResult] = await Promise.all([
+    api("/api/posts?filter=todo"),
+    api("/api/posts?filter=resource"),
+    api("/api/posts?filter=message")
+  ]);
+
+  state.filterBadgePosts = {
+    todo: todoResult.posts,
+    resource: resourceResult.posts,
+    message: messageResult.posts
+  };
+  renderFilterBadges();
+}
+
+function filterBadgeCounts() {
+  return {
+    todo: state.filterBadgePosts.todo.filter((post) => post.todoStatus === "incomplete").length,
+    resource: unreadPostCount(state.filterBadgePosts.resource),
+    message: unreadPostCount(state.filterBadgePosts.message)
+  };
+}
+
+function unreadPostCount(posts) {
+  return posts.filter((post) => shouldShowNewBadge(post)).length;
+}
+
+function renderFilterBadges() {
+  const counts = filterBadgeCounts();
+  document.querySelectorAll("[data-filter-badge]").forEach((badge) => {
+    const kind = badge.dataset.filterBadge;
+    const count = counts[kind] || 0;
+    const button = badge.closest("button");
+    const label = button?.querySelector(".filter-label")?.textContent || "";
+
+    badge.textContent = count > 99 ? "99+" : String(count);
+    badge.hidden = count === 0;
+    button?.setAttribute("aria-label", count > 0 ? `${label}，${filterBadgeDescription(kind, count)}` : label);
+  });
+}
+
+function filterBadgeDescription(kind, count) {
+  if (kind === "todo") {
+    return `${count} 个未完成待办`;
+  }
+  if (kind === "resource") {
+    return `${count} 个未查看资料`;
+  }
+  return `${count} 个未查看留言`;
 }
 
 function saveDisplayName() {

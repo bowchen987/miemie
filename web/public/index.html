@@ -105,10 +105,19 @@
 
       <section class="feed-section">
         <nav class="filter-tabs" aria-label="查看分类">
-          <button class="active" type="button" data-filter="all">全部</button>
-          <button type="button" data-filter="todo">待办</button>
-          <button type="button" data-filter="resource">资料</button>
-          <button type="button" data-filter="message">留言</button>
+          <button class="active" type="button" data-filter="all"><span class="filter-label">全部</span></button>
+          <button type="button" data-filter="todo">
+            <span class="filter-label">待办</span>
+            <span class="filter-badge" data-filter-badge="todo" hidden></span>
+          </button>
+          <button type="button" data-filter="resource">
+            <span class="filter-label">资料</span>
+            <span class="filter-badge" data-filter-badge="resource" hidden></span>
+          </button>
+          <button type="button" data-filter="message">
+            <span class="filter-label">留言</span>
+            <span class="filter-badge" data-filter-badge="message" hidden></span>
+          </button>
         </nav>
         <div class="section-heading">
           <h2 id="feedTitle">今天的小纸条</h2>

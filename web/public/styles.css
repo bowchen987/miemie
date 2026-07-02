@@ -420,14 +420,53 @@ h1 {
 }
 
 .filter-tabs button {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   min-height: 34px;
+  min-width: 0;
+  padding: 0 8px;
   border-radius: 12px;
   background: transparent;
+}
+
+.filter-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.filter-badge {
+  position: absolute;
+  top: -7px;
+  right: 5px;
+  display: grid;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border: 3px solid rgba(215, 241, 228, 0.96);
+  border-radius: 999px;
+  background: var(--coral);
+  color: var(--ink);
+  font-size: 10px;
+  font-weight: 900;
+  line-height: 1;
+  box-shadow: 0 5px 12px rgba(255, 181, 166, 0.24);
+}
+
+.filter-badge[hidden] {
+  display: none;
 }
 
 .filter-tabs button.active {
   background: var(--paper);
   box-shadow: 0 8px 18px rgba(39, 78, 69, 0.08);
+}
+
+.filter-tabs button.active .filter-badge {
+  border-color: var(--paper);
 }
 
 .feed-list {
