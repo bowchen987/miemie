@@ -2,13 +2,15 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-test("cold start refresh also attempts the opted-in current location sync", async () => {
+test("cold start refresh attempts current location sync without a local opt-in flag", async () => {
   const app = await readFile(new URL("../public/app.js", import.meta.url), "utf8");
 
   assert.match(
     app,
-    /await refreshAll\(\);\s*await syncCurrentLocation\(\{ quiet: true, requireOptIn: true \}\);\s*lastResumeRefreshAt = Date\.now\(\);/s
+    /await refreshAll\(\);\s*await syncCurrentLocation\(\{ quiet: true \}\);\s*lastResumeRefreshAt = Date\.now\(\);/s
   );
+  assert.doesNotMatch(app, /miemie\.locationAutoSyncEnabled/);
+  assert.doesNotMatch(app, /requireOptIn/);
 });
 
 test("foreground restore uses pageshow as a location sync trigger", async () => {
@@ -22,6 +24,6 @@ test("camera reply protection keeps location sync active when returning to the a
 
   assert.match(
     app,
-    /if \(hasPendingCommentPhotoSelection\(\) \|\| isCommentPhotoPickerReturning\(\)\) \{\s*refreshCommentPhotoSelections\(\);\s*settleCommentPhotoPickerReturn\(\);\s*await syncCurrentLocation\(\{ quiet: true, requireOptIn: true \}\);\s*return;\s*\}/s
+    /if \(hasPendingCommentPhotoSelection\(\) \|\| isCommentPhotoPickerReturning\(\)\) \{\s*refreshCommentPhotoSelections\(\);\s*settleCommentPhotoPickerReturn\(\);\s*await syncCurrentLocation\(\{ quiet: true \}\);\s*return;\s*\}/s
   );
 });

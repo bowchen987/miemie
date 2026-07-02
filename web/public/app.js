@@ -74,7 +74,7 @@ async function init() {
   await refreshNotificationButton();
   try {
     await refreshAll();
-    await syncCurrentLocation({ quiet: true, requireOptIn: true });
+    await syncCurrentLocation({ quiet: true });
     lastResumeRefreshAt = Date.now();
     connectEvents();
   } catch (error) {
@@ -270,7 +270,7 @@ async function refreshAfterResume() {
   if (hasPendingCommentPhotoSelection() || isCommentPhotoPickerReturning()) {
     refreshCommentPhotoSelections();
     settleCommentPhotoPickerReturn();
-    await syncCurrentLocation({ quiet: true, requireOptIn: true });
+    await syncCurrentLocation({ quiet: true });
     return;
   }
 
@@ -282,7 +282,7 @@ async function refreshAfterResume() {
 
   try {
     await refreshAll();
-    await syncCurrentLocation({ quiet: true, requireOptIn: true });
+    await syncCurrentLocation({ quiet: true });
   } catch (error) {
     if (error.message !== "family code is required") {
       elements.connectionState.textContent = "刷新失败";
@@ -787,10 +787,7 @@ async function shareLocation() {
   await syncCurrentLocation();
 }
 
-async function syncCurrentLocation({ quiet = false, requireOptIn = false } = {}) {
-  if (requireOptIn && localStorage.getItem("miemie.locationAutoSyncEnabled") !== "true") {
-    return false;
-  }
+async function syncCurrentLocation({ quiet = false } = {}) {
   if (!state.displayName) {
     return false;
   }
@@ -798,9 +795,6 @@ async function syncCurrentLocation({ quiet = false, requireOptIn = false } = {})
     if (!quiet) {
       elements.statusText.textContent = "当前浏览器不支持定位";
     }
-    return false;
-  }
-  if (requireOptIn && !(await canAutoSyncLocation())) {
     return false;
   }
 
@@ -819,20 +813,16 @@ async function syncCurrentLocation({ quiet = false, requireOptIn = false } = {})
               longitude: position.coords.longitude
             }
           });
-          localStorage.setItem("miemie.locationAutoSyncEnabled", "true");
           await loadStatus();
           resolve(true);
         } catch (error) {
-          if (!quiet) {
-            elements.statusText.textContent = error.message || "位置同步失败";
-          }
+          elements.statusText.textContent = quiet ? "自动定位失败，可点同步位置重试" : error.message || "位置同步失败";
           resolve(false);
         }
       },
-      () => {
-        if (!quiet) {
-          elements.statusText.textContent = "定位没有授权，距离暂时无法更新";
-        }
+      (error) => {
+        const message = locationErrorText(error);
+        elements.statusText.textContent = quiet ? `${message}，可点同步位置重试` : message;
         resolve(false);
       },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
@@ -840,17 +830,17 @@ async function syncCurrentLocation({ quiet = false, requireOptIn = false } = {})
   });
 }
 
-async function canAutoSyncLocation() {
-  if (!("permissions" in navigator)) {
-    return true;
+function locationErrorText(error) {
+  if (error?.code === 1) {
+    return "定位没有授权，距离暂时无法更新";
   }
-
-  try {
-    const permission = await navigator.permissions.query({ name: "geolocation" });
-    return permission.state === "granted";
-  } catch {
-    return true;
+  if (error?.code === 2) {
+    return "暂时拿不到当前位置";
   }
+  if (error?.code === 3) {
+    return "定位超时，距离暂时无法更新";
+  }
+  return "位置同步失败";
 }
 
 async function loadStatus() {
