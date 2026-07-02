@@ -1,4 +1,5 @@
-const CACHE_NAME = "miemie-pwa-v27";
+const CACHE_NAME = "miemie-pwa-v28";
+const UPLOAD_CACHE_PATH_PREFIX = "/uploads/";
 const ASSETS = [
   "/",
   "/index.html",
@@ -26,7 +27,14 @@ self.addEventListener("activate", (event) => {
 
 self.addEventListener("fetch", (event) => {
   const url = new URL(event.request.url);
-  if (url.pathname.startsWith("/api/") || url.pathname.startsWith("/uploads/")) {
+  if (event.request.method !== "GET") {
+    return;
+  }
+  if (url.pathname.startsWith("/api/")) {
+    return;
+  }
+  if (url.pathname.startsWith(UPLOAD_CACHE_PATH_PREFIX)) {
+    event.respondWith(cacheUploadedAsset(event.request));
     return;
   }
 
@@ -40,6 +48,20 @@ self.addEventListener("fetch", (event) => {
       .catch(() => caches.match(event.request))
   );
 });
+
+async function cacheUploadedAsset(request) {
+  const cached = await caches.match(request);
+  if (cached) {
+    return cached;
+  }
+
+  const response = await fetch(request);
+  if (response.ok) {
+    const cache = await caches.open(CACHE_NAME);
+    await cache.put(request, response.clone());
+  }
+  return response;
+}
 
 self.addEventListener("push", (event) => {
   const payload = readPushPayload(event);
