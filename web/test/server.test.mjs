@@ -134,6 +134,82 @@ test("toggles todos through the HTTP API", async () => {
   });
 });
 
+test("updates and deletes posts through the HTTP API and notifies other members", async () => {
+  const sent = [];
+
+  await withHttpServer(async (baseUrl) => {
+    for (const memberId of ["mama", "baba"]) {
+      const response = await fetch(`${baseUrl}/api/push/subscriptions`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          memberId,
+          displayName: memberId === "mama" ? "妈妈" : "爸爸",
+          subscription: { endpoint: `https://push.example/${memberId}`, keys: { p256dh: "key", auth: "auth" } }
+        })
+      });
+      assert.equal(response.status, 201);
+    }
+
+    const createResponse = await fetch(`${baseUrl}/api/posts`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        kind: "message",
+        title: "旧留言",
+        body: "旧内容",
+        authorName: "妈妈",
+        authorMemberId: "mama"
+      })
+    });
+    const created = await createResponse.json();
+
+    const updateResponse = await fetch(`${baseUrl}/api/posts/${created.post.id}`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        title: "新留言",
+        body: "新内容",
+        actorMemberId: "mama"
+      })
+    });
+
+    assert.equal(updateResponse.status, 200);
+    const updated = await updateResponse.json();
+    assert.equal(updated.post.title, "新留言");
+    assert.equal(updated.event.type, "post-updated");
+
+    const deleteResponse = await fetch(`${baseUrl}/api/posts/${created.post.id}`, {
+      method: "DELETE",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ actorMemberId: "mama" })
+    });
+
+    assert.equal(deleteResponse.status, 200);
+    const deleted = await deleteResponse.json();
+    assert.equal(deleted.post.title, "新留言");
+    assert.equal(deleted.event.type, "post-deleted");
+
+    const listResponse = await fetch(`${baseUrl}/api/posts?filter=message`);
+    assert.deepEqual((await listResponse.json()).posts, []);
+  }, {
+    pushNotifier: {
+      publicKey: "test-public-key",
+      sendNotification: async (subscription, payload) => {
+        sent.push({ subscription, payload });
+      }
+    }
+  });
+
+  assert.equal(sent.length, 3);
+  assert.equal(sent[1].subscription.endpoint, "https://push.example/baba");
+  assert.equal(sent[1].payload.title, "miemie 留言已更新");
+  assert.equal(sent[1].payload.body, "新留言");
+  assert.equal(sent[2].subscription.endpoint, "https://push.example/baba");
+  assert.equal(sent[2].payload.title, "miemie 留言已删除");
+  assert.equal(sent[2].payload.body, "新留言");
+});
+
 test("stores uploaded data URLs under the uploads path", async () => {
   await withHttpServer(async (baseUrl) => {
     const response = await fetch(`${baseUrl}/api/uploads`, {

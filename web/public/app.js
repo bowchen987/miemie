@@ -22,7 +22,7 @@ const EMOTIONAL_STATUS_COPY = {
     "点同步位置，把小家点亮"
   ],
   single: [
-    "{name}刚来过 miemie，等待另一位",
+    "已经收到{name}的位置，等待另一位",
     "已经收到一个人的位置啦",
     "小家亮了一半，等另一位也来一下",
     "再同步一位，就能看到距离了"
@@ -36,7 +36,7 @@ const EMOTIONAL_STATUS_COPY = {
   fresh: [
     "刚刚同步过位置",
     "小家刚刚亮了一下",
-    "刚刚来过 miemie",
+    "位置刚刚更新过",
     "位置是新鲜的，安心"
   ],
   far: [
@@ -46,10 +46,10 @@ const EMOTIONAL_STATUS_COPY = {
     "远一点也没关系，miemie 在这里"
   ],
   stale: [
-    "{name} {time}来过 miemie",
-    "{name}刚才来过，小家还记得",
     "{name}有一会儿没同步了，点一下刷新位置吧",
-    "等{name}一次新的同步，小家会更安心"
+    "等{name}一次新的同步，小家会更安心",
+    "小家在等{name}新的同步",
+    "点一下同步，让小家安心一点"
   ],
   fallback: [
     "小家正在等一次新的同步",
@@ -62,6 +62,7 @@ const COMMENT_EMOJIS = ["❤️", "👍", "😂", "🥰", "👏", "🙏"];
 const COMMENT_PHOTO_PICKER_RETURN_WINDOW_MS = 10 * 60 * 1000;
 const COMMENT_PHOTO_PICKER_SETTLE_MS = 1500;
 const NEW_BADGE_VISIBLE_MS = 1400;
+const POST_ACTION_LONG_PRESS_MS = 560;
 const POST_READ_STATE_KEY = "miemie.postReadState";
 const UPLOAD_IMAGE_MAX_EDGE = 1600;
 const UPLOAD_IMAGE_QUALITY = 0.82;
@@ -69,6 +70,7 @@ const UPLOAD_IMAGE_QUALITY = 0.82;
 const state = {
   filter: "all",
   composeKind: "message",
+  editingPostId: null,
   filterBadgePosts: {
     todo: [],
     resource: [],
@@ -87,6 +89,7 @@ let lastResumeRefreshAt = Date.now();
 let commentPhotoPickerOpenedAt = 0;
 let commentPhotoPickerClearTimer;
 let postReadState = loadPostReadState();
+let activePostActionCard = null;
 const commentPhotoRefreshers = new Set();
 
 const elements = {
@@ -106,6 +109,7 @@ const elements = {
   postForm: document.querySelector("#postForm"),
   postTemplate: document.querySelector("#postTemplate"),
   postTitleInput: document.querySelector("#postTitleInput"),
+  postSubmitButton: document.querySelector("#postForm button[type='submit']"),
   saveNameButton: document.querySelector("#saveNameButton"),
   saveFamilyCodeButton: document.querySelector("#saveFamilyCodeButton"),
   shareLocationButton: document.querySelector("#shareLocationButton"),
@@ -139,9 +143,7 @@ function bindEvents() {
     button.addEventListener("click", () => openComposer(button.dataset.composeKind));
   });
 
-  document.querySelector("#closeComposerButton").addEventListener("click", () => {
-    elements.composer.hidden = true;
-  });
+  document.querySelector("#closeComposerButton").addEventListener("click", closeComposer);
 
   document.querySelectorAll("[data-filter]").forEach((button) => {
     button.addEventListener("click", () => {
@@ -156,6 +158,12 @@ function bindEvents() {
   elements.saveFamilyCodeButton.addEventListener("click", saveFamilyCode);
   elements.shareLocationButton.addEventListener("click", shareLocation);
   elements.enableNotifyButton.addEventListener("click", requestNotificationPermission);
+  document.addEventListener("click", closePostActionMenuFromOutside);
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      hideActivePostActionMenu();
+    }
+  });
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "visible") {
       refreshAfterResume();
@@ -175,15 +183,27 @@ function registerServiceWorker() {
   return Promise.resolve(null);
 }
 
-function openComposer(kind) {
+function openComposer(kind, post = null) {
   state.composeKind = kind;
-  elements.composerTitle.textContent = `发布${KIND_TITLES[kind]}`;
+  state.editingPostId = post?.id ?? null;
+  elements.composerTitle.textContent = `${post ? "编辑" : "发布"}${KIND_TITLES[kind]}`;
   elements.postTitleInput.placeholder = placeholderForKind(kind);
-  elements.postBodyInput.value = "";
-  elements.postTitleInput.value = "";
+  elements.postBodyInput.value = post?.body ?? "";
+  elements.postTitleInput.value = post?.title ?? "";
   elements.photoInput.value = "";
+  if (post) {
+    elements.postSubmitButton.textContent = "保存修改";
+  } else {
+    elements.postSubmitButton.textContent = "发布到 miemie";
+  }
   elements.composer.hidden = false;
   elements.postTitleInput.focus();
+}
+
+function closeComposer() {
+  state.editingPostId = null;
+  elements.composer.hidden = true;
+  elements.postSubmitButton.textContent = "发布到 miemie";
 }
 
 function placeholderForKind(kind) {
@@ -212,20 +232,37 @@ async function submitPost(event) {
   const file = elements.photoInput.files[0];
   const imageUrl = file ? await uploadImage(file) : null;
 
-  await api("/api/posts", {
-    method: "POST",
-    body: {
-      kind: state.composeKind,
+  if (state.editingPostId) {
+    const updateBody = {
       title,
       body,
-      authorName: state.displayName,
-      authorMemberId: state.memberId,
-      hasPhoto: Boolean(imageUrl),
-      imageUrl
+      actorMemberId: state.memberId
+    };
+    if (file) {
+      updateBody.hasPhoto = Boolean(imageUrl);
+      updateBody.imageUrl = imageUrl;
     }
-  });
 
-  elements.composer.hidden = true;
+    await api(`/api/posts/${encodeURIComponent(state.editingPostId)}`, {
+      method: "PATCH",
+      body: updateBody
+    });
+  } else {
+    await api("/api/posts", {
+      method: "POST",
+      body: {
+        kind: state.composeKind,
+        title,
+        body,
+        authorName: state.displayName,
+        authorMemberId: state.memberId,
+        hasPhoto: Boolean(imageUrl),
+        imageUrl
+      }
+    });
+  }
+
+  closeComposer();
   await loadPosts();
   await loadFilterBadges();
 }
@@ -395,6 +432,8 @@ function renderPost(post) {
     image.removeAttribute("src");
   }
 
+  attachPostActionMenu(card, post);
+
   if (post.kind === "message") {
     const commentsSection = renderComments(post);
     card.append(commentsSection);
@@ -402,6 +441,137 @@ function renderPost(post) {
   }
 
   return fragment;
+}
+
+function attachPostActionMenu(card, post) {
+  const actions = document.createElement("div");
+  actions.className = "post-actions";
+  actions.hidden = true;
+
+  const editButton = document.createElement("button");
+  editButton.type = "button";
+  editButton.textContent = "编辑";
+  editButton.addEventListener("click", (event) => {
+    event.stopPropagation();
+    editPost(post);
+  });
+
+  const deleteButton = document.createElement("button");
+  deleteButton.type = "button";
+  deleteButton.className = "delete-action";
+  deleteButton.textContent = "删除";
+  deleteButton.addEventListener("click", (event) => {
+    event.stopPropagation();
+    deletePost(post);
+  });
+
+  actions.append(editButton, deleteButton);
+  card.append(actions);
+
+  let longPressTimer = null;
+  let startX = 0;
+  let startY = 0;
+
+  const clearLongPressTimer = () => {
+    window.clearTimeout(longPressTimer);
+    longPressTimer = null;
+  };
+
+  card.addEventListener("click", (event) => {
+    if (card.dataset.suppressNextClick === "true") {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      delete card.dataset.suppressNextClick;
+    }
+  }, true);
+
+  card.addEventListener("pointerdown", (event) => {
+    if (isPostActionTarget(event.target) || event.button !== 0) {
+      return;
+    }
+
+    startX = event.clientX;
+    startY = event.clientY;
+    clearLongPressTimer();
+    longPressTimer = window.setTimeout(() => {
+      showPostActionMenu(card);
+      card.dataset.suppressNextClick = "true";
+    }, POST_ACTION_LONG_PRESS_MS);
+  });
+
+  card.addEventListener("pointermove", (event) => {
+    if (Math.hypot(event.clientX - startX, event.clientY - startY) > 10) {
+      clearLongPressTimer();
+    }
+  });
+
+  card.addEventListener("pointerup", clearLongPressTimer);
+  card.addEventListener("pointercancel", clearLongPressTimer);
+  card.addEventListener("pointerleave", clearLongPressTimer);
+
+  card.addEventListener("contextmenu", (event) => {
+    if (isPostActionTarget(event.target)) {
+      return;
+    }
+    event.preventDefault();
+    showPostActionMenu(card);
+  });
+}
+
+function showPostActionMenu(card) {
+  if (activePostActionCard && activePostActionCard !== card) {
+    hidePostActionMenu(activePostActionCard);
+  }
+
+  activePostActionCard = card;
+  card.classList.add("action-menu-open");
+  card.querySelector(".post-actions").hidden = false;
+}
+
+function hidePostActionMenu(card) {
+  card.classList.remove("action-menu-open");
+  card.querySelector(".post-actions").hidden = true;
+  if (activePostActionCard === card) {
+    activePostActionCard = null;
+  }
+}
+
+function hideActivePostActionMenu() {
+  if (activePostActionCard) {
+    hidePostActionMenu(activePostActionCard);
+  }
+}
+
+function closePostActionMenuFromOutside(event) {
+  if (!activePostActionCard || !(event.target instanceof Element)) {
+    return;
+  }
+  if (!activePostActionCard.contains(event.target)) {
+    hideActivePostActionMenu();
+  }
+}
+
+function isPostActionTarget(target) {
+  return target instanceof Element && Boolean(target.closest(".post-actions, button, input, textarea, label"));
+}
+
+function editPost(post) {
+  hideActivePostActionMenu();
+  openComposer(post.kind, post);
+}
+
+async function deletePost(post) {
+  if (!window.confirm("删除这条内容吗？")) {
+    return;
+  }
+
+  hideActivePostActionMenu();
+  await api(`/api/posts/${encodeURIComponent(post.id)}`, {
+    method: "DELETE",
+    body: { actorMemberId: state.memberId }
+  });
+  await loadPosts();
+  await loadFilterBadges();
 }
 
 function shouldShowNewBadge(post) {
@@ -1265,6 +1435,18 @@ function notificationMessage(event) {
     return {
       title: "miemie 待办状态更新",
       body: `${event.post.title}：${event.post.todoStatus === "completed" ? "已完成" : "未完成"}`
+    };
+  }
+  if (event.type === "post-updated") {
+    return {
+      title: `miemie ${KIND_TITLES[event.post.kind] || "内容"}已更新`,
+      body: event.post.title
+    };
+  }
+  if (event.type === "post-deleted") {
+    return {
+      title: `miemie ${KIND_TITLES[event.post.kind] || "内容"}已删除`,
+      body: event.post.title
     };
   }
   if (event.type === "comment-added") {

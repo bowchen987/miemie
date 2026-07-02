@@ -25,7 +25,7 @@ test("warm status copy covers close, fresh, far, and stale location states", asy
   assert.match(app, /位置是新鲜的，安心/);
   assert.match(app, /距离有点远，但小家在线/);
   assert.match(app, /远一点也没关系，miemie 在这里/);
-  assert.match(app, /来过 miemie/);
+  assert.doesNotMatch(app, /来过 miemie/);
   assert.match(app, /小家还在等第一次定位/);
 });
 

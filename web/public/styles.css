@@ -485,6 +485,53 @@ h1 {
   padding: 14px;
 }
 
+.post-actions {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 2;
+  display: flex;
+  gap: 6px;
+  padding: 5px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgba(255, 254, 248, 0.96);
+  box-shadow: 0 10px 22px rgba(39, 78, 69, 0.14);
+}
+
+.post-actions[hidden] {
+  display: none;
+}
+
+.post-card.action-menu-open .post-actions {
+  animation: action-pop 120ms ease-out;
+}
+
+.post-actions button {
+  min-height: 30px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: var(--mint);
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.post-actions .delete-action {
+  background: rgba(255, 181, 166, 0.74);
+}
+
+@keyframes action-pop {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
 .post-card.is-new {
   border-color: rgba(232, 78, 78, 0.42);
   box-shadow: 0 12px 26px rgba(232, 78, 78, 0.12);

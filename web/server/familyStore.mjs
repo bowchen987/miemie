@@ -85,6 +85,62 @@ export class FamilyStore {
     };
   }
 
+  async updatePost(id, input = {}) {
+    const post = this.posts.find((item) => item.id === id);
+    if (!post) {
+      throw new Error("post not found");
+    }
+
+    const title = this.clean(input.title);
+    const body = this.clean(input.body);
+    if (!title) {
+      throw new Error("title is required");
+    }
+
+    const actorMemberId = this.clean(input.actorMemberId) || null;
+    post.title = title;
+    post.body = body;
+    if (Object.hasOwn(input, "imageUrl")) {
+      post.imageUrl = this.clean(input.imageUrl) || null;
+    }
+    if (Object.hasOwn(input, "hasPhoto")) {
+      post.hasPhoto = Boolean(input.hasPhoto);
+    } else {
+      post.hasPhoto = Boolean(post.imageUrl);
+    }
+    post.activityAt = this.now().toISOString();
+    post.activityByMemberId = actorMemberId;
+    post.activityType = "post-updated";
+    await this.save();
+
+    return {
+      post,
+      event: {
+        ...this.event("post-updated", post),
+        actorMemberId
+      }
+    };
+  }
+
+  async deletePost(id, input = {}) {
+    const index = this.posts.findIndex((item) => item.id === id);
+    if (index === -1) {
+      throw new Error("post not found");
+    }
+
+    const actorMemberId = this.clean(input.actorMemberId) || null;
+    const [post] = this.posts.splice(index, 1);
+    await this.save();
+
+    return {
+      post,
+      event: {
+        ...this.event("post-deleted", post),
+        actorMemberId
+      }
+    };
+  }
+
   async updateMemberLocation(input) {
     const memberId = this.clean(input.memberId);
     const displayName = this.clean(input.displayName) || memberId;

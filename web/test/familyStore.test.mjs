@@ -103,6 +103,52 @@ test("toggles todo status and records an update event", async () => {
   });
 });
 
+test("updates post content and records an edit event", async () => {
+  await withStore(async (store) => {
+    const { post } = await store.createPost({
+      kind: "resource",
+      title: "旧资料",
+      body: "旧说明",
+      authorName: "妈妈",
+      hasPhoto: true,
+      imageUrl: "/uploads/old.png"
+    });
+
+    const result = await store.updatePost(post.id, {
+      title: "新资料",
+      body: "新说明",
+      imageUrl: "/uploads/new.png",
+      hasPhoto: true,
+      actorMemberId: "baba"
+    });
+
+    assert.equal(result.post.title, "新资料");
+    assert.equal(result.post.body, "新说明");
+    assert.equal(result.post.imageUrl, "/uploads/new.png");
+    assert.equal(result.post.activityType, "post-updated");
+    assert.equal(result.post.activityByMemberId, "baba");
+    assert.equal(new Date(result.post.activityAt) > new Date(post.createdAt), true);
+    assert.equal(result.event.type, "post-updated");
+    assert.equal(result.event.postId, post.id);
+    assert.equal(result.event.actorMemberId, "baba");
+  });
+});
+
+test("deletes posts and records a delete event", async () => {
+  await withStore(async (store) => {
+    const { post } = await store.createPost({ kind: "message", title: "要删除", body: "旧内容", authorName: "妈妈" });
+
+    const result = await store.deletePost(post.id, { actorMemberId: "baba" });
+    const posts = await store.listPosts({ filter: "all" });
+
+    assert.deepEqual(posts, []);
+    assert.equal(result.post.title, "要删除");
+    assert.equal(result.event.type, "post-deleted");
+    assert.equal(result.event.postId, post.id);
+    assert.equal(result.event.actorMemberId, "baba");
+  });
+});
+
 test("persists posts to disk", async () => {
   const dir = await mkdtemp(path.join(tmpdir(), "miemie-store-"));
   try {

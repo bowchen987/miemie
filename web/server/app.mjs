@@ -77,6 +77,19 @@ export function createServer({
         return sendJson(response, 201, result);
       }
 
+      const postMatch = url.pathname.match(/^\/api\/posts\/([^/]+)$/);
+      if (request.method === "PATCH" && postMatch) {
+        const result = await store.updatePost(decodeURIComponent(postMatch[1]), await readJson(request));
+        await publishChange({ events, store, pushNotifier, event: result.event });
+        return sendJson(response, 200, result);
+      }
+
+      if (request.method === "DELETE" && postMatch) {
+        const result = await store.deletePost(decodeURIComponent(postMatch[1]), await readJson(request));
+        await publishChange({ events, store, pushNotifier, event: result.event });
+        return sendJson(response, 200, result);
+      }
+
       const toggleMatch = url.pathname.match(/^\/api\/posts\/([^/]+)\/toggle$/);
       if (request.method === "PATCH" && toggleMatch) {
         const result = await store.toggleTodo(decodeURIComponent(toggleMatch[1]), await readJson(request));
@@ -206,6 +219,20 @@ function pushPayloadForEvent(event) {
     return {
       title: "miemie 待办状态更新",
       body: `${event.post.title}：${event.post.todoStatus === "completed" ? "已完成" : "未完成"}`,
+      url: "/"
+    };
+  }
+  if (event.type === "post-updated") {
+    return {
+      title: `miemie ${KIND_TITLES[event.post.kind] || "内容"}已更新`,
+      body: event.post.title,
+      url: "/"
+    };
+  }
+  if (event.type === "post-deleted") {
+    return {
+      title: `miemie ${KIND_TITLES[event.post.kind] || "内容"}已删除`,
+      body: event.post.title,
       url: "/"
     };
   }
