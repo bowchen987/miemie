@@ -1,4 +1,5 @@
 import { notificationButtonText } from "./notificationUi.js";
+import { formatRelativeTime, formatTime } from "./timeFormat.js";
 
 const KIND_TITLES = {
   todo: "待办",
@@ -1797,13 +1798,6 @@ function showAccessPanel() {
   elements.familyCodeInput.focus();
 }
 
-function formatTime(value) {
-  return new Intl.DateTimeFormat("zh-CN", {
-    hour: "2-digit",
-    minute: "2-digit"
-  }).format(new Date(value));
-}
-
 function formatDistance(meters) {
   if (meters == null) {
     return "等待同步";
@@ -1812,18 +1806,6 @@ function formatDistance(meters) {
     return `${Math.round(meters)} m`;
   }
   return `${(meters / 1000).toFixed(1)} km`;
-}
-
-function formatRelativeTime(value) {
-  const seconds = Math.max(0, Math.round((Date.now() - new Date(value).getTime()) / 1000));
-  if (seconds < 60) {
-    return "刚刚";
-  }
-  const minutes = Math.round(seconds / 60);
-  if (minutes < 60) {
-    return `${minutes} 分钟前`;
-  }
-  return formatTime(value);
 }
 
 function urlBase64ToUint8Array(value) {
