@@ -1,0 +1,23 @@
+web/public/app.js
+  s_1698bdb502e81a::t_f4024f13bdc144 634-637
+web/test/commentPhotoUi.test.mjs
+  s_1698bdb502e81a::t_0f80ecc0fa928b 29-36
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.5",
+  "base_commit_sha": "edacd7e93be63eadf0a1e6dd2b0b48e67a1ed445",
+  "prompts": {},
+  "sessions": {
+    "s_1698bdb502e81a": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f1114-e42a-7e52-97df-93059b57512f",
+        "model": "unknown"
+      },
+      "human_author": "chenbowen.bowie <chenbowen.bowie@bytedance.com>"
+    }
+  },
+  "attestation_metadata": {},
+  "remote_transcripts": {}
+}
