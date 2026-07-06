@@ -457,6 +457,10 @@ export class FamilyStore {
   }
 
   comparePosts(left, right, filter) {
+    if (filter === "todo" && left.todoStatus !== right.todoStatus) {
+      return left.todoStatus === "incomplete" ? -1 : 1;
+    }
+
     if (filter !== "all" && Boolean(left.pinnedAt) !== Boolean(right.pinnedAt)) {
       return left.pinnedAt ? -1 : 1;
     }

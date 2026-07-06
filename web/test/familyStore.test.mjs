@@ -195,6 +195,21 @@ test("toggles todo status and records an update event", async () => {
   });
 });
 
+test("lists incomplete todos before completed todos in the todo feed", async () => {
+  await withStore(async (store) => {
+    const incomplete = await store.createPost({ kind: "todo", title: "旧的未完成", body: "", authorName: "妈妈" });
+    const completed = await store.createPost({ kind: "todo", title: "新的已完成", body: "", authorName: "爸爸" });
+    await store.toggleTodo(completed.post.id, { actorMemberId: "baba" });
+
+    const todos = await store.listPosts({ filter: "todo" });
+    const allPosts = await store.listPosts({ filter: "all" });
+
+    assert.deepEqual(todos.map((post) => post.title), ["旧的未完成", "新的已完成"]);
+    assert.deepEqual(allPosts.map((post) => post.title), ["新的已完成", "旧的未完成"]);
+    assert.equal(todos[0].id, incomplete.post.id);
+  });
+});
+
 test("updates post content and records an edit event", async () => {
   await withStore(async (store) => {
     const { post } = await store.createPost({
