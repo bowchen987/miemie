@@ -631,6 +631,10 @@ function renderPost(post) {
 
   if (post.imageUrl) {
     image.src = post.imageUrl;
+    image.addEventListener("click", (event) => {
+      event.stopPropagation();
+      openImagePreview(post.imageUrl);
+    });
   } else {
     image.removeAttribute("src");
   }

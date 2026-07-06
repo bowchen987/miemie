@@ -26,6 +26,14 @@ test("comment photo selection shows visible feedback before sending", async () =
   assert.match(styles, /\.comment-form-feedback/);
 });
 
+test("post images open the image preview from a normal tap", async () => {
+  const app = await readFile(new URL("../public/app.js", import.meta.url), "utf8");
+
+  assert.match(app, /image\.addEventListener\("click", \(event\) => \{/);
+  assert.match(app, /event\.stopPropagation\(\)/);
+  assert.match(app, /openImagePreview\(post\.imageUrl\)/);
+});
+
 test("uploaded photos are prepared before sending to avoid oversized iPhone originals", async () => {
   const app = await readFile(new URL("../public/app.js", import.meta.url), "utf8");
 
