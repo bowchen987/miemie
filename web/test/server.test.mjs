@@ -452,6 +452,49 @@ test("does not send background push notifications for member location updates", 
   assert.deepEqual(sent, []);
 });
 
+test("sends a background push reminder for another member to sync location", async () => {
+  const sent = [];
+
+  await withHttpServer(async (baseUrl) => {
+    for (const memberId of ["mama", "baba"]) {
+      const response = await fetch(`${baseUrl}/api/push/subscriptions`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          memberId,
+          displayName: memberId === "mama" ? "妈妈" : "爸爸",
+          subscription: { endpoint: `https://push.example/${memberId}`, keys: { p256dh: "key", auth: "auth" } }
+        })
+      });
+      assert.equal(response.status, 201);
+    }
+
+    const reminderResponse = await fetch(`${baseUrl}/api/location-reminders`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        actorMemberId: "mama",
+        actorName: "妈妈"
+      })
+    });
+
+    assert.equal(reminderResponse.status, 200);
+    assert.deepEqual(await reminderResponse.json(), { ok: true });
+  }, {
+    pushNotifier: {
+      publicKey: "test-public-key",
+      sendNotification: async (subscription, payload) => {
+        sent.push({ subscription, payload });
+      }
+    }
+  });
+
+  assert.equal(sent.length, 1);
+  assert.equal(sent[0].subscription.endpoint, "https://push.example/baba");
+  assert.equal(sent[0].payload.title, "miemie 提醒同步位置");
+  assert.equal(sent[0].payload.body, "妈妈 想让你同步一下位置");
+});
+
 test("registers push subscriptions and notifies other members when posts change", async () => {
   const sent = [];
 

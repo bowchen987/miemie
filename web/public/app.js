@@ -127,6 +127,7 @@ const elements = {
   resourceSearchInput: document.querySelector("#resourceSearchInput"),
   resourceTagFilters: document.querySelector("#resourceTagFilters"),
   resourceTagPicker: document.querySelector("#resourceTagPicker"),
+  remindSyncButton: document.querySelector("#remindSyncButton"),
   saveNameButton: document.querySelector("#saveNameButton"),
   saveFamilyCodeButton: document.querySelector("#saveFamilyCodeButton"),
   shareLocationButton: document.querySelector("#shareLocationButton"),
@@ -186,6 +187,7 @@ function bindEvents() {
   elements.saveNameButton.addEventListener("click", saveDisplayName);
   elements.saveFamilyCodeButton.addEventListener("click", saveFamilyCode);
   elements.shareLocationButton.addEventListener("click", shareLocation);
+  elements.remindSyncButton.addEventListener("click", remindLocationSync);
   elements.enableNotifyButton.addEventListener("click", requestNotificationPermission);
   document.addEventListener("click", closePostActionMenuFromAnyClick, true);
   document.addEventListener("keydown", (event) => {
@@ -1447,6 +1449,33 @@ async function shareLocation() {
   }
 
   await syncCurrentLocation();
+}
+
+async function remindLocationSync() {
+  if (!ensureDisplayName()) {
+    return;
+  }
+
+  elements.remindSyncButton.disabled = true;
+  elements.remindSyncButton.textContent = "戳戳中";
+  try {
+    await api("/api/location-reminders", {
+      method: "POST",
+      body: {
+        actorMemberId: state.memberId,
+        actorName: state.displayName
+      }
+    });
+    elements.remindSyncButton.textContent = "戳到了";
+    window.setTimeout(() => {
+      elements.remindSyncButton.disabled = false;
+      elements.remindSyncButton.textContent = "戳一戳";
+    }, 1400);
+  } catch (error) {
+    elements.remindSyncButton.disabled = false;
+    elements.remindSyncButton.textContent = "戳一戳";
+    elements.statusText.textContent = error.message || "提醒失败";
+  }
 }
 
 async function syncCurrentLocation({ quiet = false } = {}) {

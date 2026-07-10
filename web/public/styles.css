@@ -166,6 +166,26 @@ h1 {
   background: var(--mint);
 }
 
+.status-actions .remind-sync-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-left: auto;
+  padding-inline: 14px 16px;
+  background: linear-gradient(135deg, #fff1b4, #ffd7cd 60%, #d7f1e4);
+  border: 1px solid rgba(255, 255, 255, 0.82);
+  box-shadow: 0 10px 22px rgba(245, 158, 141, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.86);
+}
+
+.remind-sync-button::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--coral);
+  box-shadow: 7px -5px 0 var(--mint-strong), 14px 1px 0 var(--sun);
+}
+
 .distance-card {
   margin-bottom: 14px;
   padding: 18px;

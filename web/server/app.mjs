@@ -77,6 +77,15 @@ export function createServer({
         return sendJson(response, 201, { subscription: result });
       }
 
+      if (request.method === "POST" && url.pathname === "/api/location-reminders") {
+        await sendBackgroundPush({
+          store,
+          pushNotifier,
+          event: locationReminderEvent(await readJson(request))
+        });
+        return sendJson(response, 200, { ok: true });
+      }
+
       if (request.method === "POST" && url.pathname === "/api/tags") {
         const result = await store.createTag(await readJson(request));
         publish(events, result.event);
@@ -240,7 +249,23 @@ function actorMemberIdForEvent(event) {
   return event.actorMemberId ?? event.post?.authorMemberId ?? event.member?.id ?? "";
 }
 
+function locationReminderEvent(input = {}) {
+  const actorName = String(input.actorName ?? "").trim() || "对方";
+  return {
+    type: "location-sync-reminder",
+    actorMemberId: String(input.actorMemberId ?? "").trim(),
+    actorName
+  };
+}
+
 function pushPayloadForEvent(event) {
+  if (event.type === "location-sync-reminder") {
+    return {
+      title: "miemie 提醒同步位置",
+      body: `${event.actorName} 想让你同步一下位置`,
+      url: "/"
+    };
+  }
   if (event.type === "post-added") {
     return {
       title: `miemie 有新${KIND_TITLES[event.post.kind] || "内容"}`,
