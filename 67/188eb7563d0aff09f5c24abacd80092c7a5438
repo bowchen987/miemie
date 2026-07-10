@@ -1,0 +1,31 @@
+web/public/app.js
+  s_1698bdb502e81a::t_755811ede5976e 130,190,1454-1480
+web/public/index.html
+  s_1698bdb502e81a::t_228b5282196326 64
+web/public/styles.css
+  s_1698bdb502e81a::t_df79dd9b742d6f 169-188
+web/server/app.mjs
+  s_1698bdb502e81a::t_f2442af3fc3df6 80-88,252-260,262-268
+web/test/locationSyncUi.test.mjs
+  s_1698bdb502e81a::t_46ff9063c16713 30-44
+web/test/server.test.mjs
+  s_1698bdb502e81a::t_d6e4228062cd6f 455-497
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "67188eb7563d0aff09f5c24abacd80092c7a5438",
+  "prompts": {},
+  "sessions": {
+    "s_1698bdb502e81a": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f1114-e42a-7e52-97df-93059b57512f",
+        "model": "unknown"
+      },
+      "human_author": "chenbowen.bowie <chenbowen.bowie@bytedance.com>"
+    }
+  },
+  "attestation_metadata": {},
+  "remote_transcripts": {}
+}
