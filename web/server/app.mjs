@@ -262,7 +262,7 @@ function pushPayloadForEvent(event) {
   if (event.type === "location-sync-reminder") {
     return {
       title: "miemie 提醒同步位置",
-      body: `${event.actorName} 想让你同步一下位置`,
+      body: `${event.actorName}戳了下你~`,
       url: "/"
     };
   }

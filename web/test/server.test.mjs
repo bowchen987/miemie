@@ -492,7 +492,7 @@ test("sends a background push reminder for another member to sync location", asy
   assert.equal(sent.length, 1);
   assert.equal(sent[0].subscription.endpoint, "https://push.example/baba");
   assert.equal(sent[0].payload.title, "miemie 提醒同步位置");
-  assert.equal(sent[0].payload.body, "妈妈 想让你同步一下位置");
+  assert.equal(sent[0].payload.body, "妈妈戳了下你~");
 });
 
 test("registers push subscriptions and notifies other members when posts change", async () => {
