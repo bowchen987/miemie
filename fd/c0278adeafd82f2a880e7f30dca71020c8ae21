@@ -1,0 +1,23 @@
+web/server/app.mjs
+  s_1698bdb502e81a::t_ea260e9a4b982c 265
+web/test/server.test.mjs
+  s_1698bdb502e81a::t_9994ef803ff731 495
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "fdc0278adeafd82f2a880e7f30dca71020c8ae21",
+  "prompts": {},
+  "sessions": {
+    "s_1698bdb502e81a": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f1114-e42a-7e52-97df-93059b57512f",
+        "model": "unknown"
+      },
+      "human_author": "chenbowen.bowie <chenbowen.bowie@bytedance.com>"
+    }
+  },
+  "attestation_metadata": {},
+  "remote_transcripts": {}
+}
