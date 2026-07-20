@@ -17,6 +17,8 @@ const FILTER_TITLES = {
 
 const RESOURCE_KINDS = new Set(["resource", "photo"]);
 const UNTAGGED_RESOURCE_FILTER = "__untagged";
+const PAGINATED_FILTERS = new Set(["todo", "resource", "message"]);
+const FEED_PAGE_SIZE = 5;
 
 const EMOTIONAL_STATUS_COPY = {
   empty: [
@@ -80,6 +82,7 @@ const state = {
   resourceTagFilter: "all",
   selectedResourceTagIds: [],
   tags: [],
+  feedPage: 1,
   filterBadgePosts: {
     todo: [],
     resource: [],
@@ -112,17 +115,21 @@ const elements = {
   accessPanel: document.querySelector("#accessPanel"),
   familyCodeInput: document.querySelector("#familyCodeInput"),
   feedList: document.querySelector("#feedList"),
+  feedPager: document.querySelector("#feedPager"),
+  feedPageStatus: document.querySelector("#feedPageStatus"),
   feedTitle: document.querySelector("#feedTitle"),
   identityPanel: document.querySelector("#identityPanel"),
   composerTagList: document.querySelector("#composerTagList"),
   createTagButton: document.querySelector("#createTagButton"),
   newTagInput: document.querySelector("#newTagInput"),
+  nextPageButton: document.querySelector("#nextPageButton"),
   photoInput: document.querySelector("#photoInput"),
   postBodyInput: document.querySelector("#postBodyInput"),
   postForm: document.querySelector("#postForm"),
   postTemplate: document.querySelector("#postTemplate"),
   postTitleInput: document.querySelector("#postTitleInput"),
   postSubmitButton: document.querySelector("#postForm button[type='submit']"),
+  previousPageButton: document.querySelector("#previousPageButton"),
   resourceArchiveTools: document.querySelector("#resourceArchiveTools"),
   resourceSearchInput: document.querySelector("#resourceSearchInput"),
   resourceTagFilters: document.querySelector("#resourceTagFilters"),
@@ -166,6 +173,7 @@ function bindEvents() {
   document.querySelectorAll("[data-filter]").forEach((button) => {
     button.addEventListener("click", () => {
       state.filter = button.dataset.filter;
+      resetFeedPage();
       updateFilterTabs();
       renderResourceArchiveTools();
       loadPosts();
@@ -182,8 +190,11 @@ function bindEvents() {
   });
   elements.resourceSearchInput.addEventListener("input", () => {
     state.resourceSearch = elements.resourceSearchInput.value.trim();
+    resetFeedPage();
     loadPosts();
   });
+  elements.previousPageButton.addEventListener("click", () => changeFeedPage(-1));
+  elements.nextPageButton.addEventListener("click", () => changeFeedPage(1));
   elements.saveNameButton.addEventListener("click", saveDisplayName);
   elements.saveFamilyCodeButton.addEventListener("click", saveFamilyCode);
   elements.shareLocationButton.addEventListener("click", shareLocation);
@@ -399,6 +410,7 @@ function resourceTagFilterButton(value, label) {
   button.textContent = label;
   button.addEventListener("click", () => {
     state.resourceTagFilter = value;
+    resetFeedPage();
     renderResourceArchiveTools();
     loadPosts();
   });
@@ -508,6 +520,7 @@ async function deleteResourceTag(tag) {
   await api(`/api/tags/${encodeURIComponent(tag.id)}`, { method: "DELETE" });
   if (state.resourceTagFilter === tag.id) {
     state.resourceTagFilter = "all";
+    resetFeedPage();
   }
   state.selectedResourceTagIds = state.selectedResourceTagIds.filter((tagId) => tagId !== tag.id);
   await loadTags();
@@ -581,6 +594,8 @@ function renderPosts() {
   elements.feedTitle.textContent = FILTER_TITLES[state.filter];
   renderResourceArchiveTools();
   elements.feedList.replaceChildren();
+  const visiblePosts = postsForCurrentPage();
+  renderFeedPager();
 
   if (state.posts.length === 0) {
     const empty = document.createElement("p");
@@ -590,9 +605,52 @@ function renderPosts() {
     return;
   }
 
-  for (const post of state.posts) {
+  for (const post of visiblePosts) {
     elements.feedList.append(renderPost(post));
   }
+}
+
+function postsForCurrentPage() {
+  if (!PAGINATED_FILTERS.has(state.filter)) {
+    return state.posts;
+  }
+
+  const totalPages = feedPageCount();
+  state.feedPage = Math.min(Math.max(state.feedPage, 1), totalPages);
+  const startIndex = (state.feedPage - 1) * FEED_PAGE_SIZE;
+  return state.posts.slice(startIndex, startIndex + FEED_PAGE_SIZE);
+}
+
+function feedPageCount() {
+  return Math.max(1, Math.ceil(state.posts.length / FEED_PAGE_SIZE));
+}
+
+function resetFeedPage() {
+  state.feedPage = 1;
+}
+
+function changeFeedPage(offset) {
+  const nextPage = Math.min(Math.max(state.feedPage + offset, 1), feedPageCount());
+  if (nextPage === state.feedPage) {
+    return;
+  }
+
+  state.feedPage = nextPage;
+  renderPosts();
+  elements.feedTitle.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function renderFeedPager() {
+  const totalPages = feedPageCount();
+  const shouldShow = PAGINATED_FILTERS.has(state.filter) && totalPages > 1;
+  elements.feedPager.hidden = !shouldShow;
+  if (!shouldShow) {
+    return;
+  }
+
+  elements.feedPageStatus.textContent = `${state.feedPage} / ${totalPages}`;
+  elements.previousPageButton.disabled = state.feedPage === 1;
+  elements.nextPageButton.disabled = state.feedPage === totalPages;
 }
 
 function renderPost(post) {

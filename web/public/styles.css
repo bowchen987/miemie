@@ -604,6 +604,45 @@ h1 {
   gap: 10px;
 }
 
+.feed-pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.feed-pager[hidden] {
+  display: none;
+}
+
+.feed-pager button {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 21px;
+  font-weight: 900;
+  box-shadow: 0 7px 16px rgba(39, 78, 69, 0.08);
+}
+
+.feed-pager button:disabled {
+  opacity: 0.38;
+  box-shadow: none;
+}
+
+.feed-pager span {
+  min-width: 54px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 900;
+  text-align: center;
+}
+
 .empty-state {
   padding: 16px 12px;
   color: var(--muted);

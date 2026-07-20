@@ -1,4 +1,4 @@
-const CACHE_NAME = "miemie-pwa-v29";
+const CACHE_NAME = "miemie-pwa-v30";
 const UPLOAD_CACHE_PATH_PREFIX = "/uploads/";
 const ASSETS = [
   "/",
