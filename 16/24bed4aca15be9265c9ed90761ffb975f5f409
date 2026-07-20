@@ -1,0 +1,29 @@
+web/public/app.js
+  s_1698bdb502e81a::t_b825b76ddba501 20-21,85,118-119,125,132,176,193,196-197,413,523,597-598,608,613-655
+web/public/index.html
+  s_1698bdb502e81a::t_325b915903973a 147-151
+web/public/styles.css
+  s_1698bdb502e81a::t_2fe462ffec1878 607-645
+web/public/sw.js
+  s_1698bdb502e81a::t_21695d826b62cd 1
+web/test/feedFilterUi.test.mjs
+  s_1698bdb502e81a::t_51d05840d88cf5 13-28
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "1624bed4aca15be9265c9ed90761ffb975f5f409",
+  "prompts": {},
+  "sessions": {
+    "s_1698bdb502e81a": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f1114-e42a-7e52-97df-93059b57512f",
+        "model": "unknown"
+      },
+      "human_author": "chenbowen.bowie <chenbowen.bowie@bytedance.com>"
+    }
+  },
+  "attestation_metadata": {},
+  "remote_transcripts": {}
+}
