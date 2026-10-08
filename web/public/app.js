@@ -1,5 +1,5 @@
-import { notificationButtonText } from "./notificationUi.js";
-import { formatRelativeTime, formatTime } from "./timeFormat.js";
+import { notificationButtonText } from "./notificationUi.js?v=31";
+import { formatRelativeTime, formatTime } from "./timeFormat.js?v=31";
 
 const KIND_TITLES = {
   todo: "待办",
@@ -73,6 +73,20 @@ const POST_ACTION_SWIPE_THRESHOLD = 44;
 const POST_READ_STATE_KEY = "miemie.postReadState";
 const UPLOAD_IMAGE_MAX_EDGE = 1600;
 const UPLOAD_IMAGE_QUALITY = 0.82;
+const API_RETRY_DELAY_MS = 650;
+
+function createMemberId() {
+  if (globalThis.crypto?.randomUUID) {
+    return globalThis.crypto.randomUUID();
+  }
+
+  if (globalThis.crypto?.getRandomValues) {
+    const bytes = globalThis.crypto.getRandomValues(new Uint8Array(16));
+    return Array.from(bytes, (value) => value.toString(16).padStart(2, "0")).join("");
+  }
+
+  return `member-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
 
 const state = {
   filter: "all",
@@ -89,7 +103,7 @@ const state = {
     message: []
   },
   posts: [],
-  memberId: localStorage.getItem("miemie.memberId") || crypto.randomUUID(),
+  memberId: localStorage.getItem("miemie.memberId") || createMemberId(),
   displayName: localStorage.getItem("miemie.displayName") || "",
   familyCode: localStorage.getItem("miemie.familyCode") || ""
 };
@@ -97,6 +111,7 @@ const state = {
 localStorage.setItem("miemie.memberId", state.memberId);
 let eventSource;
 let serviceWorkerRegistration;
+let serviceWorkerRefreshStarted = false;
 let lastResumeRefreshAt = Date.now();
 let commentPhotoPickerOpenedAt = 0;
 let commentPhotoPickerClearTimer;
@@ -142,7 +157,7 @@ const elements = {
   syncDetailText: document.querySelector("#syncDetailText")
 };
 
-init();
+init().catch(showStartupError);
 
 async function init() {
   elements.displayNameInput.value = state.displayName;
@@ -158,7 +173,7 @@ async function init() {
     connectEvents();
   } catch (error) {
     if (error.message !== "family code is required") {
-      throw error;
+      showStartupError(error);
     }
   }
 }
@@ -193,8 +208,8 @@ function bindEvents() {
     resetFeedPage();
     loadPosts();
   });
-  elements.previousPageButton.addEventListener("click", () => changeFeedPage(-1));
-  elements.nextPageButton.addEventListener("click", () => changeFeedPage(1));
+  elements.previousPageButton?.addEventListener("click", () => changeFeedPage(-1));
+  elements.nextPageButton?.addEventListener("click", () => changeFeedPage(1));
   elements.saveNameButton.addEventListener("click", saveDisplayName);
   elements.saveFamilyCodeButton.addEventListener("click", saveFamilyCode);
   elements.shareLocationButton.addEventListener("click", shareLocation);
@@ -220,9 +235,80 @@ function bindEvents() {
 
 function registerServiceWorker() {
   if ("serviceWorker" in navigator) {
-    return navigator.serviceWorker.register("/sw.js").catch(() => null);
+    navigator.serviceWorker.addEventListener("controllerchange", () => {
+      if (serviceWorkerRefreshStarted) {
+        return;
+      }
+      serviceWorkerRefreshStarted = true;
+      window.location.reload();
+    });
+
+    return navigator.serviceWorker
+      .register("/sw.js")
+      .then((registration) => {
+        registration.update().catch(() => {});
+        return registration;
+      })
+      .catch(() => null);
   }
   return Promise.resolve(null);
+}
+
+function showStartupError(error) {
+  console.error("miemie startup failed", error);
+  if (elements.connectionState) {
+    elements.connectionState.textContent = "加载失败";
+  }
+
+  const panel = document.querySelector("#startupRecoveryPanel") || createStartupRecoveryPanel();
+  const message = panel.querySelector("p");
+  if (message) {
+    message.textContent = friendlyNetworkError(error);
+  }
+}
+
+function createStartupRecoveryPanel() {
+  const panel = document.createElement("section");
+  panel.id = "startupRecoveryPanel";
+  panel.className = "startup-recovery-panel";
+  panel.setAttribute("role", "alert");
+
+  const content = document.createElement("div");
+  const title = document.createElement("strong");
+  title.textContent = "小家暂时没有加载好";
+  const message = document.createElement("p");
+  message.textContent = "网络可能刚刚打了个盹，请重新加载。";
+  content.append(title, message);
+
+  const retryButton = document.createElement("button");
+  retryButton.type = "button";
+  retryButton.textContent = "重新加载";
+  retryButton.addEventListener("click", async () => {
+    retryButton.disabled = true;
+    retryButton.textContent = "正在修复";
+    await clearAppShellCaches();
+    if (serviceWorkerRegistration) {
+      await serviceWorkerRegistration.update().catch(() => {});
+    }
+    window.location.reload();
+  });
+
+  panel.append(content, retryButton);
+  const topbar = document.querySelector(".topbar");
+  if (topbar) {
+    topbar.after(panel);
+  } else {
+    document.body.prepend(panel);
+  }
+  return panel;
+}
+
+async function clearAppShellCaches() {
+  if (!("caches" in window)) {
+    return;
+  }
+  const cacheNames = await caches.keys();
+  await Promise.all(cacheNames.filter((name) => name.startsWith("miemie-pwa-")).map((name) => caches.delete(name)));
 }
 
 function openComposer(kind, post = null) {
@@ -641,6 +727,10 @@ function changeFeedPage(offset) {
 }
 
 function renderFeedPager() {
+  if (!elements.feedPager || !elements.feedPageStatus || !elements.previousPageButton || !elements.nextPageButton) {
+    return;
+  }
+
   const totalPages = feedPageCount();
   const shouldShow = PAGINATED_FILTERS.has(state.filter) && totalPages > 1;
   elements.feedPager.hidden = !shouldShow;
@@ -1862,18 +1952,21 @@ function commentNotificationBody(comment) {
 }
 
 async function api(path, options = {}) {
+  const method = options.method ?? "GET";
   const headers = options.body ? { "content-type": "application/json" } : {};
   if (state.familyCode) {
     headers["x-miemie-family-code"] = state.familyCode;
   }
 
-  const response = await fetch(path, {
-    method: options.method ?? "GET",
+  const requestOptions = {
+    method,
     headers,
-    body: options.body ? JSON.stringify(options.body) : undefined
-  });
+    body: options.body ? JSON.stringify(options.body) : undefined,
+    cache: "no-store"
+  };
+  const response = await fetchApiResponseWithRetry(path, requestOptions, method);
 
-  const body = await response.json();
+  const body = await response.json().catch(() => ({}));
   if (response.status === 401) {
     showAccessPanel();
     throw new Error("family code is required");
@@ -1882,6 +1975,39 @@ async function api(path, options = {}) {
     throw new Error(body.error || "请求失败");
   }
   return body;
+}
+
+async function fetchApiResponseWithRetry(path, requestOptions, method) {
+  const attempts = method === "GET" ? 2 : 1;
+  let lastError;
+
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
+    try {
+      const response = await fetch(path, requestOptions);
+      const retryableStatus = response.status === 502 || response.status === 503 || response.status === 504;
+      if (!retryableStatus || attempt === attempts - 1) {
+        return response;
+      }
+    } catch (error) {
+      lastError = error;
+      if (attempt === attempts - 1) {
+        break;
+      }
+    }
+
+    await new Promise((resolve) => window.setTimeout(resolve, API_RETRY_DELAY_MS));
+  }
+
+  const networkError = new Error("网络连接失败，请检查网络后重试");
+  networkError.cause = lastError;
+  throw networkError;
+}
+
+function friendlyNetworkError(error) {
+  if (!navigator.onLine || error?.message === "网络连接失败，请检查网络后重试") {
+    return "网络连接失败，请检查网络后重新加载。";
+  }
+  return "应用资源可能没有更新完整，点一下重新加载即可修复。";
 }
 
 function showAccessPanel() {

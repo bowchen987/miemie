@@ -373,7 +373,8 @@ async function serveStatic(response, publicDir, uploadDir, pathname) {
   try {
     const data = await readFile(filePath);
     response.writeHead(200, {
-      "content-type": MIME_TYPES.get(path.extname(filePath)) ?? "application/octet-stream"
+      "content-type": MIME_TYPES.get(path.extname(filePath)) ?? "application/octet-stream",
+      "cache-control": staticCacheControl(filePath, uploadDir)
     });
     response.end(data);
   } catch (error) {
@@ -382,6 +383,17 @@ async function serveStatic(response, publicDir, uploadDir, pathname) {
     }
     throw error;
   }
+}
+
+function staticCacheControl(filePath, uploadDir) {
+  const resolvedUploadDir = path.resolve(uploadDir);
+  if (filePath.startsWith(`${resolvedUploadDir}${path.sep}`)) {
+    return "public, max-age=31536000, immutable";
+  }
+  if (path.extname(filePath) === ".html" || path.basename(filePath) === "sw.js") {
+    return "no-store";
+  }
+  return "no-cache";
 }
 
 function resolveStaticPath(publicDir, uploadDir, pathname) {

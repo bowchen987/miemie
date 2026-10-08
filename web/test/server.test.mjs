@@ -213,6 +213,18 @@ test("returns a health check for hosting platforms", async () => {
   });
 });
 
+test("prevents stale app shells while allowing uploaded images to stay cached", async () => {
+  await withHttpServer(async (baseUrl) => {
+    const page = await fetch(`${baseUrl}/`);
+    const script = await fetch(`${baseUrl}/app.js?v=31`);
+    const serviceWorker = await fetch(`${baseUrl}/sw.js`);
+
+    assert.equal(page.headers.get("cache-control"), "no-store");
+    assert.equal(serviceWorker.headers.get("cache-control"), "no-store");
+    assert.equal(script.headers.get("cache-control"), "no-cache");
+  });
+});
+
 test("toggles todos through the HTTP API", async () => {
   await withHttpServer(async (baseUrl) => {
     const createResponse = await fetch(`${baseUrl}/api/posts`, {

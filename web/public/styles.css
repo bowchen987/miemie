@@ -519,6 +519,37 @@ h1 {
   padding: 12px;
 }
 
+.startup-recovery-panel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 13px 14px;
+  border: 1px solid rgba(216, 118, 99, 0.26);
+  background: #fff1ec;
+}
+
+.startup-recovery-panel strong {
+  display: block;
+  margin-bottom: 3px;
+}
+
+.startup-recovery-panel p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.startup-recovery-panel button {
+  flex: 0 0 auto;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: var(--coral);
+  color: var(--ink);
+  font-weight: 900;
+}
+
 .filter-tabs {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
