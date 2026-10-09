@@ -216,7 +216,7 @@ test("returns a health check for hosting platforms", async () => {
 test("prevents stale app shells while allowing uploaded images to stay cached", async () => {
   await withHttpServer(async (baseUrl) => {
     const page = await fetch(`${baseUrl}/`);
-    const script = await fetch(`${baseUrl}/app.js?v=31`);
+    const script = await fetch(`${baseUrl}/app.js?v=32`);
     const serviceWorker = await fetch(`${baseUrl}/sw.js`);
 
     assert.equal(page.headers.get("cache-control"), "no-store");

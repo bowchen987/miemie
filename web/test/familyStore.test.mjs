@@ -330,6 +330,85 @@ test("updates member locations and reports distance between two members", async 
   });
 });
 
+test("merges repeated logins that use the same display name", async () => {
+  await withStore(async (store) => {
+    await store.updateMemberLocation({
+      memberId: "xiaohu-old",
+      displayName: "小胡",
+      latitude: 30,
+      longitude: 120
+    });
+    await store.updateMemberLocation({
+      memberId: "xiaochen",
+      displayName: "小陈",
+      latitude: 31.2304,
+      longitude: 121.4737
+    });
+    await store.updateMemberLocation({
+      memberId: "xiaohu-new",
+      displayName: " 小胡 ",
+      latitude: 31.2314,
+      longitude: 121.4737
+    });
+
+    const status = await store.familyStatus();
+    const xiaohu = status.members.find((member) => member.displayName === "小胡");
+
+    assert.deepEqual(status.members.map((member) => member.displayName).sort(), ["小胡", "小陈"].sort());
+    assert.equal(xiaohu.id, "xiaohu-new");
+    assert.deepEqual(Object.keys(store.members).sort(), ["xiaohu-new", "xiaochen"].sort());
+    assert.equal(status.distanceMeters > 100, true);
+    assert.equal(status.distanceMeters < 120, true);
+  });
+});
+
+test("deduplicates legacy member records by name when loading stored data", async () => {
+  const dir = await mkdtemp(path.join(tmpdir(), "miemie-store-"));
+  try {
+    await writeFile(
+      path.join(dir, "family-posts.json"),
+      JSON.stringify({
+        posts: [],
+        tags: [],
+        members: {
+          "xiaohu-old": {
+            id: "xiaohu-old",
+            displayName: "小胡",
+            latitude: 30,
+            longitude: 120,
+            updatedAt: "2026-09-24T01:19:00.000Z"
+          },
+          "xiaohu-new": {
+            id: "xiaohu-new",
+            displayName: "小胡",
+            latitude: 31.2314,
+            longitude: 121.4737,
+            updatedAt: "2026-10-09T00:00:00.000Z"
+          },
+          xiaochen: {
+            id: "xiaochen",
+            displayName: "小陈",
+            latitude: 31.2304,
+            longitude: 121.4737,
+            updatedAt: "2026-10-08T23:59:00.000Z"
+          }
+        },
+        pushSubscriptions: []
+      })
+    );
+
+    const store = new FamilyStore({ dataDir: dir });
+    await store.ready;
+    const status = await store.familyStatus();
+
+    assert.equal(status.members.length, 2);
+    assert.equal(status.members.find((member) => member.displayName === "小胡").id, "xiaohu-new");
+    assert.deepEqual(Object.keys(store.members).sort(), ["xiaohu-new", "xiaochen"].sort());
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
 test("stores push subscriptions and excludes the acting member", async () => {
   await withStore(async (store) => {
     await store.savePushSubscription({

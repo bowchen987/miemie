@@ -1,5 +1,5 @@
-import { notificationButtonText } from "./notificationUi.js?v=31";
-import { formatRelativeTime, formatTime } from "./timeFormat.js?v=31";
+import { notificationButtonText } from "./notificationUi.js?v=32";
+import { formatRelativeTime, formatTime } from "./timeFormat.js?v=32";
 
 const KIND_TITLES = {
   todo: "待办",
@@ -1702,7 +1702,7 @@ function emotionalStatusText(status) {
     });
   }
 
-  const otherMember = members.find((member) => member.id !== state.memberId) || oldestLocationMember(members);
+  const otherMember = members.find((member) => !isCurrentMember(member)) || oldestLocationMember(members);
   const otherAgeSeconds = locationAgeSeconds(otherMember);
   const newestAgeSeconds = Math.min(...members.map(locationAgeSeconds));
   const allRecentlySynced = members.every((member) => locationAgeSeconds(member) < 30 * 60);
@@ -1742,6 +1742,10 @@ function syncDetailText(status) {
 
 function locationMembers(status) {
   return status.members.filter((member) => member.updatedAt);
+}
+
+function isCurrentMember(member) {
+  return member.id === state.memberId || Boolean(state.displayName && member.displayName === state.displayName);
 }
 
 function oldestLocationMember(members) {

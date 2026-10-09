@@ -280,6 +280,7 @@ export class FamilyStore {
       updatedAt: this.now().toISOString()
     };
     this.members[memberId] = member;
+    this.members = this.deduplicateMemberMap(this.members);
     await this.save();
 
     return {
@@ -365,7 +366,9 @@ export class FamilyStore {
   }
 
   async familyStatus() {
-    const members = Object.values(this.members).sort((left, right) => left.displayName.localeCompare(right.displayName));
+    const members = Object.values(this.deduplicateMemberMap(this.members)).sort((left, right) =>
+      left.displayName.localeCompare(right.displayName)
+    );
     return {
       members,
       distanceMeters: this.distanceBetweenFirstTwoMembers(members)
@@ -382,7 +385,8 @@ export class FamilyStore {
         ? data.posts.map((post) => ({ comments: [], pinnedAt: null, tagIds: [], ...post }))
         : [];
       this.tags = Array.isArray(data.tags) ? data.tags : [];
-      this.members = data.members && typeof data.members === "object" ? data.members : {};
+      const loadedMembers = data.members && typeof data.members === "object" ? data.members : {};
+      this.members = this.deduplicateMemberMap(loadedMembers);
       this.pushSubscriptions = Array.isArray(data.pushSubscriptions) ? data.pushSubscriptions : [];
     } catch (error) {
       if (error.code !== "ENOENT") {
@@ -409,6 +413,32 @@ export class FamilyStore {
 
   clean(value) {
     return String(value ?? "").trim();
+  }
+
+  deduplicateMemberMap(members) {
+    const membersByName = new Map();
+
+    for (const [storedId, item] of Object.entries(members)) {
+      if (!item || typeof item !== "object") {
+        continue;
+      }
+
+      const id = this.clean(item.id) || storedId;
+      const displayName = this.clean(item.displayName) || id;
+      const member = { ...item, id, displayName };
+      const identityKey = displayName.normalize("NFKC").toLocaleLowerCase();
+      const existing = membersByName.get(identityKey);
+      if (!existing || this.memberUpdatedAt(member) >= this.memberUpdatedAt(existing)) {
+        membersByName.set(identityKey, member);
+      }
+    }
+
+    return Object.fromEntries(Array.from(membersByName.values(), (member) => [member.id, member]));
+  }
+
+  memberUpdatedAt(member) {
+    const timestamp = Date.parse(member.updatedAt);
+    return Number.isNaN(timestamp) ? 0 : timestamp;
   }
 
   normalizeKind(kind) {

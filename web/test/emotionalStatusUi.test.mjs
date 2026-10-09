@@ -36,3 +36,11 @@ test("warm status copy is selected from a stable daily key", async () => {
   assert.match(app, /function stableStatusCopyIndex\(key, count\)/);
   assert.match(app, /new Date\(\)\.toISOString\(\)\.slice\(0, 10\)/);
 });
+
+test("current member matching survives a changed device id", async () => {
+  const app = await readFile(new URL("../public/app.js", import.meta.url), "utf8");
+
+  assert.match(app, /function isCurrentMember\(member\)/);
+  assert.match(app, /member\.displayName === state\.displayName/);
+  assert.match(app, /members\.find\(\(member\) => !isCurrentMember\(member\)\)/);
+});
