@@ -26,3 +26,16 @@ test("kind feeds paginate five posts at a time", async () => {
   assert.match(html, /id="nextPageButton"/);
   assert.match(html, /id="feedPageStatus"/);
 });
+
+test("memo quick action uses the selected brain icon", async () => {
+  const [html, styles] = await Promise.all([
+    readFile(new URL("../public/index.html", import.meta.url), "utf8"),
+    readFile(new URL("../public/styles.css", import.meta.url), "utf8")
+  ]);
+
+  assert.match(html, /data-compose-kind="message"[\s\S]*class="action-icon memo-icon"/);
+  assert.match(html, /class="memo-brain-left"/);
+  assert.match(html, /class="memo-brain-sparkle"/);
+  assert.doesNotMatch(html, /<span class="action-icon">✉<\/span>/);
+  assert.match(styles, /\.memo-icon svg\s*\{[^}]*width:\s*31px[^}]*height:\s*31px/s);
+});

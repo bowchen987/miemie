@@ -327,6 +327,42 @@ h1 {
   background: var(--sky);
 }
 
+.memo-icon svg {
+  width: 31px;
+  height: 31px;
+  overflow: visible;
+  filter: drop-shadow(0 1px 0 rgba(255, 254, 248, 0.78));
+}
+
+.memo-brain-left,
+.memo-brain-right,
+.memo-brain-sparkle {
+  stroke: var(--ink);
+  stroke-linejoin: round;
+}
+
+.memo-brain-left {
+  fill: #ffc4ba;
+  stroke-width: 2.8;
+}
+
+.memo-brain-right {
+  fill: #ffd9d2;
+  stroke-width: 2.8;
+}
+
+.memo-brain-folds {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 2.8;
+  stroke-linecap: round;
+}
+
+.memo-brain-sparkle {
+  fill: var(--lemon);
+  stroke-width: 1.5;
+}
+
 .access-panel,
 .composer,
 .post-card,

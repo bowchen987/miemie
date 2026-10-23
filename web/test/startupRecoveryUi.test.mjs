@@ -29,14 +29,14 @@ test("app shell assets are versioned together and GET requests recover from tran
     readFile(new URL("../public/sw.js", import.meta.url), "utf8")
   ]);
 
-  assert.match(html, /href="\/styles\.css\?v=33"/);
-  assert.match(html, /src="\/app\.js\?v=33"/);
-  assert.match(app, /notificationUi\.js\?v=33/);
-  assert.match(app, /timeFormat\.js\?v=33/);
+  assert.match(html, /href="\/styles\.css\?v=34"/);
+  assert.match(html, /src="\/app\.js\?v=34"/);
+  assert.match(app, /notificationUi\.js\?v=34/);
+  assert.match(app, /timeFormat\.js\?v=34/);
   assert.match(app, /async function fetchApiResponseWithRetry/);
   assert.match(app, /const attempts = method === "GET" \? 2 : 1/);
   assert.match(app, /网络连接失败，请检查网络后重试/);
-  assert.match(sw, /const CACHE_NAME = "miemie-pwa-v33"/);
-  assert.match(sw, /"\/app\.js\?v=33"/);
-  assert.match(sw, /"\/styles\.css\?v=33"/);
+  assert.match(sw, /const CACHE_NAME = "miemie-pwa-v34"/);
+  assert.match(sw, /"\/app\.js\?v=34"/);
+  assert.match(sw, /"\/styles\.css\?v=34"/);
 });
