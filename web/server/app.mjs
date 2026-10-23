@@ -19,7 +19,7 @@ const MAX_BODY_BYTES = 8 * 1024 * 1024;
 const KIND_TITLES = {
   todo: "待办",
   resource: "资料",
-  message: "留言",
+  message: "备忘",
   photo: "照片"
 };
 

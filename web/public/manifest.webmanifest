@@ -2,7 +2,7 @@
   "id": "/",
   "name": "miemie",
   "short_name": "miemie",
-  "description": "夫妻家庭待办、资料、留言和距离同步",
+  "description": "夫妻家庭待办、资料、备忘和距离同步",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

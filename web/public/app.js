@@ -1,10 +1,10 @@
-import { notificationButtonText } from "./notificationUi.js?v=32";
-import { formatRelativeTime, formatTime } from "./timeFormat.js?v=32";
+import { notificationButtonText } from "./notificationUi.js?v=33";
+import { formatRelativeTime, formatTime } from "./timeFormat.js?v=33";
 
 const KIND_TITLES = {
   todo: "待办",
   resource: "资料",
-  message: "留言",
+  message: "备忘",
   photo: "照片"
 };
 
@@ -12,7 +12,7 @@ const FILTER_TITLES = {
   all: "今天的小纸条",
   todo: "全部待办",
   resource: "全部资料",
-  message: "全部留言"
+  message: "全部备忘"
 };
 
 const RESOURCE_KINDS = new Set(["resource", "photo"]);
@@ -1556,7 +1556,7 @@ function filterBadgeDescription(kind, count) {
   if (kind === "resource") {
     return `${count} 个未查看资料`;
   }
-  return `${count} 个未查看留言`;
+  return `${count} 个未查看备忘`;
 }
 
 function saveDisplayName() {

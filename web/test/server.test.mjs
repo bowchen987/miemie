@@ -216,7 +216,7 @@ test("returns a health check for hosting platforms", async () => {
 test("prevents stale app shells while allowing uploaded images to stay cached", async () => {
   await withHttpServer(async (baseUrl) => {
     const page = await fetch(`${baseUrl}/`);
-    const script = await fetch(`${baseUrl}/app.js?v=32`);
+    const script = await fetch(`${baseUrl}/app.js?v=33`);
     const serviceWorker = await fetch(`${baseUrl}/sw.js`);
 
     assert.equal(page.headers.get("cache-control"), "no-store");
@@ -303,10 +303,10 @@ test("toggles pinned posts through the HTTP API and notifies other members", asy
 
   assert.equal(sent.length, 3);
   assert.equal(sent[1].subscription.endpoint, "https://push.example/baba");
-  assert.equal(sent[1].payload.title, "miemie 留言已置顶");
+  assert.equal(sent[1].payload.title, "miemie 备忘已置顶");
   assert.equal(sent[1].payload.body, "今晚吃面");
   assert.equal(sent[2].subscription.endpoint, "https://push.example/baba");
-  assert.equal(sent[2].payload.title, "miemie 留言已取消置顶");
+  assert.equal(sent[2].payload.title, "miemie 备忘已取消置顶");
   assert.equal(sent[2].payload.body, "今晚吃面");
 });
 
@@ -379,10 +379,10 @@ test("updates and deletes posts through the HTTP API and notifies other members"
 
   assert.equal(sent.length, 3);
   assert.equal(sent[1].subscription.endpoint, "https://push.example/baba");
-  assert.equal(sent[1].payload.title, "miemie 留言已更新");
+  assert.equal(sent[1].payload.title, "miemie 备忘已更新");
   assert.equal(sent[1].payload.body, "新留言");
   assert.equal(sent[2].subscription.endpoint, "https://push.example/baba");
-  assert.equal(sent[2].payload.title, "miemie 留言已删除");
+  assert.equal(sent[2].payload.title, "miemie 备忘已删除");
   assert.equal(sent[2].payload.body, "新留言");
 });
 
@@ -553,7 +553,7 @@ test("registers push subscriptions and notifies other members when posts change"
 
   assert.equal(sent.length, 1);
   assert.equal(sent[0].subscription.endpoint, "https://push.example/baba");
-  assert.equal(sent[0].payload.title, "miemie 有新留言");
+  assert.equal(sent[0].payload.title, "miemie 有新备忘");
   assert.equal(sent[0].payload.body, "早点回家");
 });
 
