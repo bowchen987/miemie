@@ -10,7 +10,7 @@ services:
     healthCheckPath: /healthz
     envVars:
       - key: NODE_VERSION
-        value: 24
+        value: "24.22.1"
       - key: DATA_DIR
         value: /var/data/miemie
       - key: FAMILY_CODE
