@@ -53,8 +53,14 @@ export function createServer({
           return sendJson(response, 200, await health.week(url.searchParams.get("member"), members.map(m => m.displayName)));
         }
         if (request.method === "PATCH") {
-          const day = await health.checkIn(await readJson(request));
+          const input = await readJson(request);
+          const { scoreChanged, ...day } = await health.checkIn(input);
           publish(events, { type: "health-updated" });
+          if (scoreChanged) {
+            await sendBackgroundPush({ store, pushNotifier, event: {
+              type: "health-score-updated", actorDisplayName: input.displayName.trim(), date: day.date, score: day.score
+            } });
+          }
           return sendJson(response, 200, day);
         }
       }
@@ -265,7 +271,10 @@ async function sendBackgroundPush({ store, pushNotifier, event }) {
     return;
   }
 
-  const subscriptions = await store.listPushSubscriptions({ excludingMemberId: actorMemberIdForEvent(event) });
+  const subscriptions = await store.listPushSubscriptions({
+    excludingMemberId: actorMemberIdForEvent(event),
+    excludingDisplayName: event.actorDisplayName
+  });
   await Promise.all(
     subscriptions.map((item) => pushNotifier.sendNotification(item.subscription, payload).catch(() => {}))
   );
@@ -285,6 +294,13 @@ function locationReminderEvent(input = {}) {
 }
 
 function pushPayloadForEvent(event) {
+  if (event.type === "health-score-updated") {
+    return {
+      title: "养生咩 · 分数更新",
+      body: `${event.actorDisplayName} 的 ${event.date} 打卡已更新，当前 ${event.score} 分。`,
+      url: "/#health"
+    };
+  }
   if (event.type === "location-sync-reminder") {
     return {
       title: "miemie 提醒同步位置",

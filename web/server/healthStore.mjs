@@ -146,6 +146,7 @@ export class HealthStore {
         data.members.push(member);
       }
       const ids = new Set(member.days[date]);
+      const previousScore = ids.size;
       for (const { id, done } of changes) {
         const activity = data.activities.find(a => a.id === id);
         if (!activity?.active || typeof done !== "boolean") throw new Error("事项已停用或选择无效");
@@ -153,7 +154,7 @@ export class HealthStore {
         else ids.delete(id);
       }
       member.days[date] = [...ids];
-      return { date, ids: [...ids], score: ids.size };
+      return { date, ids: [...ids], score: ids.size, scoreChanged: ids.size !== previousScore };
     });
   }
 }

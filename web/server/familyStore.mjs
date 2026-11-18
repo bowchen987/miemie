@@ -365,8 +365,10 @@ export class FamilyStore {
     return item;
   }
 
-  async listPushSubscriptions({ excludingMemberId = "" } = {}) {
-    return this.pushSubscriptions.filter((item) => item.memberId !== excludingMemberId);
+  async listPushSubscriptions({ excludingMemberId = "", excludingDisplayName = "" } = {}) {
+    const excludedName = memberNameKey(excludingDisplayName);
+    return this.pushSubscriptions.filter(item => item.memberId !== excludingMemberId &&
+      (!excludedName || memberNameKey(item.displayName ?? "") !== excludedName));
   }
 
   async familyStatus() {

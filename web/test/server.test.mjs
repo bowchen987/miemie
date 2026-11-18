@@ -56,7 +56,7 @@ test("creates and lists posts through the HTTP API", async () => {
   });
 });
 
-test("family health endpoints share check-ins without posting to the feed or sending push", async () => {
+test("health score changes notify only the partner, without posting to the feed", async () => {
   const sent = [];
   await withHttpServer(async base => {
     const headers = { "x-miemie-family-code": "family", "content-type": "application/json" };
@@ -68,18 +68,28 @@ test("family health endpoints share check-ins without posting to the feed or sen
       assert.ok(res.ok, String(res.status));
       return res.json();
     };
-    await request("/api/push/subscriptions", "POST", { memberId: "partner", subscription: { endpoint: "https://push.example/partner" } });
+    for (const [memberId, displayName] of [["self", "Amy"], ["old-device", "ＡＭＹ"], ["partner", "乙"]]) {
+      await request("/api/push/subscriptions", "POST", { memberId, displayName, subscription: { endpoint: "https://push.example/" + memberId } });
+    }
     const activity = await request("/api/health/activities", "POST", { name: "散步" });
-    const date = (await request(week)).days.at(-1).date;
-    const day = await request("/api/health/checkins", "PATCH", {
-      displayName: "Amy", date, changes: [{ id: activity.id, done: true }]
+    const date = (await request(week)).days.at(-2).date;
+    const save = changes => request("/api/health/checkins", "PATCH", {
+      displayName: "Amy", date, changes
     });
-    assert.equal(day.score, 1);
+    const changes = [{ id: activity.id, done: true }, { id: "sleep", done: true }];
+    const [day] = await Promise.all([save(changes), save(changes)]);
+    assert.equal(day.score, 2);
+    await save([{ id: "sleep", done: false }, { id: "exercise", done: true }]);
+    assert.equal(sent.length, 1);
+    await save([{ id: "exercise", done: false }]);
     await request("/api/health/activities/" + activity.id, "PATCH", { active: false });
-    assert.equal((await request(week)).days.at(-1).score, 1);
+    assert.equal((await request(week)).days.at(-2).score, 1);
+    assert.deepEqual(sent, [2, 1].map(score => [
+      { endpoint: "https://push.example/partner" },
+      { title: "养生咩 · 分数更新", body: `Amy 的 ${date} 打卡已更新，当前 ${score} 分。`, url: "/#health" }
+    ]));
     assert.deepEqual((await request("/api/posts")).posts, []);
   }, { familyCode: "family", pushNotifier: { sendNotification: async (...args) => sent.push(args) } });
-  assert.deepEqual(sent, []);
 });
 
 test("lists today's paper by requested day range through the HTTP API", async () => {
