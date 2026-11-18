@@ -1,5 +1,6 @@
-import { notificationButtonText } from "./notificationUi.js?v=34";
-import { formatRelativeTime, formatTime } from "./timeFormat.js?v=34";
+import { setupHealthPanel } from "./healthPanel.js?v=36";
+import { notificationButtonText } from "./notificationUi.js?v=36";
+import { formatRelativeTime, formatTime } from "./timeFormat.js?v=36";
 
 const KIND_TITLES = {
   todo: "待办",
@@ -157,6 +158,7 @@ const elements = {
   syncDetailText: document.querySelector("#syncDetailText")
 };
 
+const healthPanel = setupHealthPanel({ api, ensureDisplayName, currentName: () => state.displayName });
 init().catch(showStartupError);
 
 async function init() {
@@ -1790,9 +1792,14 @@ function connectEvents() {
   eventSource = new EventSource(`/api/events${query}`);
   eventSource.addEventListener("open", () => {
     elements.connectionState.textContent = "实时同步";
+    healthPanel?.refresh();
   });
   eventSource.addEventListener("message", async (event) => {
     const familyEvent = JSON.parse(event.data);
+    if (familyEvent.type === "health-updated") {
+      healthPanel?.refresh();
+      return;
+    }
     await refreshAll();
     notifyForEvent(familyEvent);
   });

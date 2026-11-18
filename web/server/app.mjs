@@ -2,6 +2,7 @@ import { createServer as createHttpServer } from "node:http";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
+import { HealthStore } from "./healthStore.mjs";
 
 const MIME_TYPES = new Map([
   [".css", "text/css; charset=utf-8"],
@@ -32,6 +33,7 @@ export function createServer({
 }) {
   const events = new Set();
   const requiredFamilyCode = familyCode.trim();
+  const health = new HealthStore(store.dataDir, store.now);
 
   return createHttpServer(async (request, response) => {
     try {
@@ -43,6 +45,30 @@ export function createServer({
 
       if (url.pathname.startsWith("/api/") && !isAuthorized(request, url, requiredFamilyCode)) {
         return sendJson(response, 401, { error: "family code is required" });
+      }
+
+      if (url.pathname === "/api/health/checkins") {
+        if (request.method === "GET") {
+          const { members } = await store.familyStatus();
+          return sendJson(response, 200, await health.week(url.searchParams.get("member"), members.map(m => m.displayName)));
+        }
+        if (request.method === "PATCH") {
+          const day = await health.checkIn(await readJson(request));
+          publish(events, { type: "health-updated" });
+          return sendJson(response, 200, day);
+        }
+      }
+      const activityMatch = url.pathname.match(/^\/api\/health\/activities(?:\/([^/]+))?$/);
+      if (activityMatch) {
+        const id = activityMatch[1];
+        if (!id && request.method === "GET") {
+          return sendJson(response, 200, { activities: (await health.read()).activities });
+        }
+        if ((!id && request.method === "POST") || (id && request.method === "PATCH")) {
+          const activity = await health.editActivity(id, await readJson(request));
+          publish(events, { type: "health-updated" });
+          return sendJson(response, id ? 200 : 201, activity);
+        }
       }
 
       if (request.method === "GET" && url.pathname === "/api/posts") {

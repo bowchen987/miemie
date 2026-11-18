@@ -1,12 +1,13 @@
-const CACHE_NAME = "miemie-pwa-v34";
+const CACHE_NAME = "miemie-pwa-v36";
 const UPLOAD_CACHE_PATH_PREFIX = "/uploads/";
 const ASSETS = [
   "/",
   "/index.html",
-  "/styles.css?v=34",
-  "/app.js?v=34",
-  "/notificationUi.js?v=34",
-  "/timeFormat.js?v=34",
+  "/styles.css?v=36",
+  "/app.js?v=36",
+  "/healthPanel.js?v=36",
+  "/notificationUi.js?v=36",
+  "/timeFormat.js?v=36",
   "/manifest.webmanifest",
   "/icons/app-icon.png",
   "/icons/sheep.svg"

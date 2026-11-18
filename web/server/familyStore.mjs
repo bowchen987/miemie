@@ -2,6 +2,10 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 
+export function memberNameKey(name) {
+  return name.trim().normalize("NFKC").toLocaleLowerCase();
+}
+
 const VALID_KINDS = new Set(["todo", "resource", "message", "photo"]);
 const VALID_FILTERS = new Set(["all", "todo", "resource", "message"]);
 const RESOURCE_KINDS = new Set(["resource", "photo"]);
@@ -426,7 +430,7 @@ export class FamilyStore {
       const id = this.clean(item.id) || storedId;
       const displayName = this.clean(item.displayName) || id;
       const member = { ...item, id, displayName };
-      const identityKey = displayName.normalize("NFKC").toLocaleLowerCase();
+      const identityKey = memberNameKey(displayName);
       const existing = membersByName.get(identityKey);
       if (!existing || this.memberUpdatedAt(member) >= this.memberUpdatedAt(existing)) {
         membersByName.set(identityKey, member);

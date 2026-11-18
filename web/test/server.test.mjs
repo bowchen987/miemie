@@ -56,6 +56,32 @@ test("creates and lists posts through the HTTP API", async () => {
   });
 });
 
+test("family health endpoints share check-ins without posting to the feed or sending push", async () => {
+  const sent = [];
+  await withHttpServer(async base => {
+    const headers = { "x-miemie-family-code": "family", "content-type": "application/json" };
+    const week = "/api/health/checkins?member=Amy";
+    assert.equal((await fetch(base + week)).status, 401);
+    assert.equal((await fetch(base + "/api/health/activities")).status, 401);
+    const request = async (route, method = "GET", body) => {
+      const res = await fetch(base + route, { headers, method, body: JSON.stringify(body) });
+      assert.ok(res.ok, String(res.status));
+      return res.json();
+    };
+    await request("/api/push/subscriptions", "POST", { memberId: "partner", subscription: { endpoint: "https://push.example/partner" } });
+    const activity = await request("/api/health/activities", "POST", { name: "散步" });
+    const date = (await request(week)).days.at(-1).date;
+    const day = await request("/api/health/checkins", "PATCH", {
+      displayName: "Amy", date, changes: [{ id: activity.id, done: true }]
+    });
+    assert.equal(day.score, 1);
+    await request("/api/health/activities/" + activity.id, "PATCH", { active: false });
+    assert.equal((await request(week)).days.at(-1).score, 1);
+    assert.deepEqual((await request("/api/posts")).posts, []);
+  }, { familyCode: "family", pushNotifier: { sendNotification: async (...args) => sent.push(args) } });
+  assert.deepEqual(sent, []);
+});
+
 test("lists today's paper by requested day range through the HTTP API", async () => {
   let currentTime = new Date("2026-07-01T15:30:00.000Z");
   await withHttpServer(async (baseUrl) => {
@@ -216,7 +242,7 @@ test("returns a health check for hosting platforms", async () => {
 test("prevents stale app shells while allowing uploaded images to stay cached", async () => {
   await withHttpServer(async (baseUrl) => {
     const page = await fetch(`${baseUrl}/`);
-    const script = await fetch(`${baseUrl}/app.js?v=34`);
+    const script = await fetch(`${baseUrl}/app.js?v=36`);
     const serviceWorker = await fetch(`${baseUrl}/sw.js`);
 
     assert.equal(page.headers.get("cache-control"), "no-store");
