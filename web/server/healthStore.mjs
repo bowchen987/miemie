@@ -7,10 +7,12 @@ const DAY = 86_400_000;
 const BEIJING_OFFSET = 8 * 3_600_000;
 const colors = ["#dc9276", "#56ad91", "#9392c9", "#e2b254", "#6eaac6", "#d886aa",
   "#809d60", "#ca755b", "#598b96", "#b49a68", "#ae78a1"];
+const sleepName = "昨天23:30前睡觉";
+const sleepGuide = "所选日期的前一晚在 23:30 前睡觉就可以勾选。比如周二晚上早睡，就记在周三。";
 const defaultActivities = [
   ["bowel", "顺畅便便", "今天排过一次便，就可以勾选。"],
   ["exercise", "健身", "今天完成了一次自己安排的锻炼。"],
-  ["sleep", "23:30 前睡觉", "当天晚上 23:30 前睡了。第二天补记时，选昨晚的日期。"],
+  ["sleep", sleepName, sleepGuide],
   ["after-meal-walk", "饭后溜达", "选一顿饭，吃完出门走 10 分钟，接娃、遛弯都算。"],
   ["sitting-break", "屁股放个假", "今天有一次久坐时，主动站起来活动 5 分钟。"],
   ["vegetables", "蔬菜有戏", "午饭或晚饭里，认真吃了一份蔬菜。"],
@@ -37,8 +39,7 @@ function nameOf(value, limit) {
   return value.trim();
 }
 
-function upgradeCatalog(data) {
-  if (data.catalogVersion >= 2) return data;
+function addDefaultActivities(data) {
   for (const [id, name, description] of defaultActivities) {
     const matchesName = a => memberNameKey(a.name) === memberNameKey(name);
     const existing = data.activities.find(a => a.id === id)
@@ -50,7 +51,19 @@ function upgradeCatalog(data) {
       data.activities.push({ id, name, description, color: activityColor(data.activities.length), active: true });
     }
   }
-  data.catalogVersion = 2;
+}
+
+function upgradeCatalog(data) {
+  if (data.catalogVersion >= 3) return data;
+  const oldName = "23:30 前睡觉";
+  const sleep = data.activities.find(a => a.id === "sleep")
+    ?? data.activities.find(a => a.name === oldName);
+  if (sleep && (sleep.name === oldName || sleep.name === sleepName)) {
+    sleep.name = sleepName;
+    sleep.description = sleepGuide;
+  }
+  if ((data.catalogVersion ?? 0) < 2) addDefaultActivities(data);
+  data.catalogVersion = 3;
   return data;
 }
 

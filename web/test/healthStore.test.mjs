@@ -21,7 +21,7 @@ async function fixture(t) {
 test("all eleven default check-ins include guidance and can each earn one point", async t => {
   const { store } = await fixture(t);
   const { activities } = await store.week("甲");
-  assert.deepEqual(activities.map(a => a.name), ["顺畅便便", "健身", "23:30 前睡觉", "饭后溜达", "屁股放个假",
+  assert.deepEqual(activities.map(a => a.name), ["顺畅便便", "健身", "昨天23:30前睡觉", "饭后溜达", "屁股放个假",
     "蔬菜有戏", "肩膀下班", "手机先睡", "今天几分甜", "全家放风", "心情开个麦"]);
   assert.ok(activities.every(a => a.active && a.description?.trim()));
   assert.equal(new Set(activities.map(a => a.color)).size, 11);
@@ -54,6 +54,22 @@ test("upgrading an existing family keeps renamed, retired, and matching custom a
   assert.equal(saved.activities.length, 11);
   assert.equal(saved.activities.filter(a => a.name === "饭后溜达").length, 0);
   assert.equal(saved.days.at(-1).score, 1);
+});
+
+test("upgrading the bedtime label keeps past check-ins on their original date", async t => {
+  const { dir, store } = await fixture(t);
+  await writeFile(path.join(dir, "health.json"), JSON.stringify({
+    catalogVersion: 2,
+    activities: [{ id: "sleep", name: "23:30 前睡觉", description: "第二天补记时，选昨晚的日期。", active: false }],
+    members: [{ name: "甲", days: { "2026-11-17": ["sleep"] } }]
+  }));
+  const { activities, days } = await store.week("甲");
+  assert.equal(activities.length, 1);
+  assert.equal(activities[0].name, "昨天23:30前睡觉");
+  assert.match(activities[0].description, /前一晚/);
+  assert.equal(activities[0].active, false);
+  assert.deepEqual(days.at(-2), { date: "2026-11-17", ids: ["sleep"], score: 1 });
+  assert.equal(days.at(-1).score, 0);
 });
 
 test("health week rolls over in Beijing and enforces a seven-day edit window", async t => {
